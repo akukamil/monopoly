@@ -3613,12 +3613,17 @@ casino={
 		let result=0
 		
 		if (i0===i1&&i1===i2){
-			result=this.bid*2
+			result=Math.round(this.bid*0.8)
+			objects.casino_info.text='Ваш результат: +'+ result+'$ (с учетом ставки)'
+		}else if (i0===i1||i1===i2||i0===i2){
+			result=Math.round(this.bid*0.2)
 			objects.casino_info.text='Ваш результат: +'+ result+'$ (с учетом ставки)'
 		}else{
 			result=-this.bid
-			objects.casino_info.text='Ваш результат: '+ result+'$ (с учетом ставки)'			
+			objects.casino_info.text='Ваш результат: '+ result+'$ (с учетом ставки)'
 		}
+		
+			
 		
 		//отправляем информацию сопернику
 		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'casino_result',result,tm:Date.now()})
@@ -3924,8 +3929,8 @@ common={
 		objects.cells_cont.visible=true
 
 		//начальный баланс
-		my_data.money=1500
-		opp_data.money=1500
+		my_data.money=1000
+		opp_data.money=1000
 		
 		//количество домов
 		this.houses_num=30
