@@ -4,7 +4,7 @@ var app, assets={},fbs,SERV_TM, game_name='monopoly', yndx_payments, game, clien
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 const STAT_LS_KEY='pool_sp_stat';
 
-const cells_data=[{id:0,type:"start"},{id:1,type:"city",rus_name:"Канпур",eng_name:"Kanpur",country:1,price:50,house_cost:50,rent:[0,2,30,78,145,231,336,460],owner:0,level:0},{id:2,type:"city",rus_name:"Сурат",eng_name:"Surat",country:1,price:50,house_cost:50,auc:1,rent:[0,2,30,78,145,231,336,460],owner:0,level:0},{id:3,type:"city",rus_name:"Дели",eng_name:"Deli",country:1,price:50,house_cost:50,rent:[0,2,30,78,145,231,336,460],owner:0,level:0},{id:4,type:"city",rus_name:"Уфа",eng_name:"Ufa",country:2,price:75,house_cost:75,rent:[0,4,45,117,217,346,504,638],owner:0,level:0},{id:5,type:"city",rus_name:"Казань",eng_name:"Kazan",country:2,price:75,house_cost:75,auc:1,rent:[0,4,45,117,217,346,504,638],owner:0,level:0},{id:6,type:"city",rus_name:"Москва",eng_name:"Moscow",country:2,price:75,house_cost:75,rent:[0,4,45,117,217,346,504,638],owner:0,level:0},{id:7,type:"?"},{id:8,type:"city",rus_name:"Холон",eng_name:"Holon",country:3,price:100,house_cost:100,rent:[0,6,60,156,290,462,672,820],owner:0,level:0},{id:9,type:"city",rus_name:"Ашдод",eng_name:"Ashdod",country:3,price:100,house_cost:100,auc:1,rent:[0,6,60,156,290,462,672,820],owner:0,level:0},{id:10,type:"city",rus_name:"София",eng_name:"Sofia",country:4,price:100,house_cost:100,rent:[0,6,60,156,290,462,672,820],owner:0,level:0},{id:11,type:"city",rus_name:"Варна",eng_name:"Varna",country:4,price:100,house_cost:100,auc:1,rent:[0,6,60,156,290,462,672,820],owner:0,level:0},{id:12,type:"casino"},{id:13,type:"city",rus_name:"Рим",eng_name:"Rim",country:5,price:125,house_cost:125,rent:[0,10,75,195,362,577,840,1000],owner:0,level:0},{id:14,type:"city",rus_name:"Милан",eng_name:"Milan",country:5,price:125,house_cost:125,auc:1,rent:[0,10,75,195,362,577,840,1000],owner:0,level:0},{id:15,type:"city",rus_name:"Турин",eng_name:"Turin",country:5,price:125,house_cost:125,rent:[0,10,75,195,362,577,840,1000],owner:0,level:0},{id:16,type:"city",rus_name:"Лондон",eng_name:"London",country:6,price:150,house_cost:150,rent:[0,14,90,234,434,692,1007,1170],owner:0,level:0},{id:17,type:"city",rus_name:"Глазго",eng_name:"Glazgo",country:6,price:150,house_cost:150,auc:1,rent:[0,14,90,234,434,692,1007,1170],owner:0,level:0},{id:18,type:"city",rus_name:"Плимут",eng_name:"Plimut",country:6,price:150,house_cost:150,rent:[0,14,90,234,434,692,1007,1170],owner:0,level:0},{id:19,type:"?"},{id:20,type:"city",rus_name:"Париж",eng_name:"Paris",country:7,price:150,house_cost:150,rent:[0,15,90,234,434,692,1007,1125],owner:0,level:0},{id:21,type:"city",rus_name:"Лион",eng_name:"Lyon",country:7,price:150,house_cost:150,auc:1,rent:[0,15,90,234,434,692,1007,1125],owner:0,level:0},{id:22,type:"city",rus_name:"Даллас",eng_name:"Dallas",country:8,price:175,house_cost:175,rent:[0,18,106,273,507,808,1175,1313],owner:0,level:0},{id:23,type:"city",rus_name:"Чикаго",eng_name:"Chicago",country:8,price:175,house_cost:175,auc:1,rent:[0,18,106,273,507,808,1175,1313],owner:0,level:0}]
+const cells_data=[{id:0,type:"start"},{id:1,type:"city",rus_name:"Канпур",eng_name:"Kanpur",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:2,type:"city",rus_name:"Сурат",eng_name:"Surat",country:1,price:50,house_cost:50,auc:1,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:3,type:"city",rus_name:"Дели",eng_name:"Deli",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:4,type:"city",rus_name:"Уфа",eng_name:"Ufa",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:5,type:"city",rus_name:"Казань",eng_name:"Kazan",country:2,price:75,house_cost:75,auc:1,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:6,type:"city",rus_name:"Москва",eng_name:"Moscow",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:7,type:"?"},{id:8,type:"city",rus_name:"Холон",eng_name:"Holon",country:3,price:100,house_cost:100,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:9,type:"city",rus_name:"Ашдод",eng_name:"Ashdod",country:3,price:100,house_cost:100,auc:1,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:10,type:"city",rus_name:"София",eng_name:"Sofia",country:4,price:125,house_cost:125,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:11,type:"city",rus_name:"Варна",eng_name:"Varna",country:4,price:125,house_cost:125,auc:1,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:12,type:"casino"},{id:13,type:"city",rus_name:"Рим",eng_name:"Rim",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:14,type:"city",rus_name:"Милан",eng_name:"Milan",country:5,price:150,house_cost:150,auc:1,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:15,type:"city",rus_name:"Турин",eng_name:"Turin",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:16,type:"city",rus_name:"Лондон",eng_name:"London",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:17,type:"city",rus_name:"Глазго",eng_name:"Glazgo",country:6,price:200,house_cost:200,auc:1,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:18,type:"city",rus_name:"Плимут",eng_name:"Plimut",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:19,type:"?"},{id:20,type:"city",rus_name:"Париж",eng_name:"Paris",country:7,price:250,house_cost:250,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:21,type:"city",rus_name:"Лион",eng_name:"Lyon",country:7,price:250,house_cost:250,auc:1,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:22,type:"city",rus_name:"Даллас",eng_name:"Dallas",country:8,price:300,house_cost:300,rent:[0,72,138,413,964,1171,1377],owner:0,level:0},{id:23,type:"city",rus_name:"Чикаго",eng_name:"Chicago",country:8,price:300,house_cost:300,auc:1,rent:[0,72,138,413,964,1171,1377],owner:0,level:0}]
 
 const chip_anchors=[
 	{dx:-1,dy:-1,ang:45},
@@ -1352,7 +1352,7 @@ process_new_message = function(msg) {
 			if (msg.type==='auc_bid'||msg.type==='auc_buy'||msg.type==='auc_dec'||msg.type==='auc_dec2'||msg.type==='auc_giveup')
 				auc.opp_bid(msg);
 			
-			if (['exch','exch_decline','exch_approve','buy','sell','casino_accept','casino_decline','casino_result'].includes(msg.type))
+			if (['exch','plan','exch_decline','exch_approve','buy','sell','casino_accept','casino_decline','casino_result'].includes(msg.type))
 				common.process_opp_move(msg);
 								
 			//получение сообщение с ходом игорка
@@ -3037,17 +3037,18 @@ dice={
 	pointerdown(){
 
 		if (this.roll_timer) return
-		if (!this.click_timer) return
+		//if (!this.click_timer) return
 
 		//останавливаем
-		clearInterval(this.click_timer)
-		this.click_timer=0
+		//clearInterval(this.click_timer)
+		//this.click_timer=0
 
-		objects.dice_hand.visible=false
+		//objects.dice_hand.visible=false
 		this.roll_and_go(objects.blue_chip);
 		//отправляем сопернику
 		fbs.ref('inbox/'+opp_data.uid).set({message:'MOVE',sender:my_data.uid,type:'roll',roll_res:this.roll_res,tm:Date.now()})
 
+		objects.roll_dice_btn.visible=false
 	}
 
 
@@ -3076,7 +3077,7 @@ fin={
 
 	pointerdown(){
 
-		if (!this.click_timer) return
+		//if (!this.click_timer) return
 
 		if (my_data.money<=0){
 			sys_msg.add('Восстановите положительный баланс!')
@@ -3084,16 +3085,20 @@ fin={
 		}
 
 		//останавливаем
-		objects.fin_hand.visible=false
-		clearInterval(this.click_timer)
-		this.click_timer=0
+		//objects.fin_hand.visible=false
+		//clearInterval(this.click_timer)
+		//this.click_timer=0
 
 		//отправляем сопернику
 		fbs.ref('inbox/'+opp_data.uid).set({message:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
 
+
 		//теперь уже не мой ход
 		my_turn_started=0
 		my_turn=0
+		
+		objects.roll_dice_btn.visible=false	
+		objects.end_turn_btn.visible=false		
 	}
 
 }
@@ -3171,8 +3176,8 @@ city_dlg={
 			btn2.visible=true
 			btn2_t.visible=true
 
-			btn2.x=100
-			btn2_t.x=185
+			//btn2.x=100
+			//btn2_t.x=185
 		}
 
 		if (num===2){
@@ -3186,11 +3191,11 @@ city_dlg={
 			btn2.visible=true
 			btn2_t.visible=true
 
-			btn1.x=20
-			btn1_t.x=105
+			//btn1.x=20
+			//btn1_t.x=105
 
-			btn2.x=180
-			btn2_t.x=265
+			//btn2.x=180
+			//btn2_t.x=265
 		}
 
 
@@ -3202,15 +3207,23 @@ city_dlg={
 		this.cur_cell=cell
 
 		objects.cell_info_title.text=cell.rus_name
-		objects.cell_info_params.text='РЕНТА БЕЗ ДОМОВ:\nРЕНТА БЕЗ ДОМОВ* (:\nРЕНТА C 1 ДОМОМ:\nРЕНТА С 2 ДОМАМИ:\nРЕНТА С 3 ДОМАМИ:\nРЕНТА С 4 ДОМАМИ:\nРЕНТА С ОТЕЛЕМ:'
-		objects.cell_info_prices.text=cell.rent[1]+'$\n'+cell.rent[2]+'$\n'+cell.rent[3]+'$\n'+cell.rent[4]+'$\n'+cell.rent[5]+'$\n'+cell.rent[6]+'$\n'+cell.rent[7]+'$'
-
+		objects.cell_info_params_header.text='Уровень'
+		objects.cell_info_prices_header.text='Рента'
+		objects.cell_info_params.text='Только город\nГород и 1 дом\nГород и 2 дома\nГород и 3 дома\nГород и 4 дома\nГород и отель'
+		objects.cell_info_prices.text='$ '+cell.rent[1]+'\n$ '+cell.rent[2]+'\n$ '+cell.rent[3]+'\n$ '+cell.rent[4]+'\n$ '+cell.rent[5]+'\n$ '+cell.rent[6]
+		objects.cell_info_params.y=140
+		objects.cell_info_prices.y=140
+		
+		
 		const btn1=objects.cell_info_btn1
 		const btn2=objects.cell_info_btn2
 		const btn1_t=objects.cell_info_btn1_t
-		const btn2_t=objects.cell_info_btn2_t
-		
+		const btn2_t=objects.cell_info_btn2_t		
 
+		//текущий уровень
+		objects.cell_info_cur_level_hl.visible=cell.level?true:false
+		objects.cell_info_cur_level_hl.y=107+cell.level*21
+		
 		if (cell.owner===2){
 			this.place_buttons(1)
 			btn2.alpha=0.5
@@ -3230,43 +3243,45 @@ city_dlg={
 
 		if (cell.owner===1){
 
-			if ([1,2].includes(cell.level)){
+			if (cell.level===1){
 				this.place_buttons(2,'sell','buy')
 				btn1_t.text=`ПРОДАТЬ ГОРОД\n+${Math.round(cell.price*0.5)}$`
 				btn2_t.text=`КУПИТЬ ДОМ\n-${Math.round(cell.house_cost)}$`
 			}
 
-			if ([3,4,5].includes(cell.level)){
+			if ([2,3,4].includes(cell.level)){
 				this.place_buttons(2,'sell','buy')
 				btn1_t.text=`ПРОДАТЬ ДОМ\n+${Math.round(cell.house_cost*0.5)}$`
 				btn2_t.text=`КУПИТЬ ДОМ\n-${Math.round(cell.house_cost)}$`
 			}
 
-			if (cell.level===6){
+			if (cell.level===5){
 				this.place_buttons(2,'sell','buy')
 				btn1_t.text=`ПРОДАТЬ ДОМ\n+${Math.round(cell.house_cost*0.5)}$`
 				btn2_t.text=`КУПИТЬ ОТЕЛЬ\n-${Math.round(cell.house_cost)}$`
 			}
 
-			if (cell.level===7){
+			if (cell.level===6){
 				this.place_buttons(1,'sell')
 				btn2_t.text=`ПРОДАТЬ ОТЕЛЬ\n+${Math.round(cell.house_cost*0.5)}$`
 			}
 
 		}
 		
+		
 		//проверяем можно ли купить и строить
 		if (btn2.visible&&this.check_buy()!=='ok'){
 			btn2.alpha=0.5
 			btn2_t.alpha=0.5
 		}
+	
 	},
 
 	show(id){
 
 		const cell=cells_data[id]	
-		objects.cell_info_params.y=105
-		objects.cell_info_prices.y=105
+		//objects.cell_info_params.y=90
+		//objects.cell_info_prices.y=90
 		
 		objects.cell_info_cont.visible=true
 		this.update(cell)		
@@ -3361,7 +3376,7 @@ auc={
 		
 		this.new_bid=this.cur_bid=cell.price
 		this.cur_cell=cell
-		objects.auc_bid.text=this.cur_bid
+		objects.auc_bid.text=this.cur_bid+'$'
 		objects.auc_asset_name.text=cell.rus_name
 		
 		if (this.state==='on_my_bid'){
@@ -3387,7 +3402,7 @@ auc={
 			objects.auc_make_bid_btn.alpha=1
 			this.started=1
 			this.new_bid=this.cur_bid=data.bid
-			objects.auc_bid.text=data.bid
+			objects.auc_bid.text=data.bid+'$'
 			anim3.add(objects.auc_bid,{scale_xy:[1, 1.5,'ease2back']}, true, 0.25);
 			objects.auc_info.text='Соперник сделал ставку! Ваш ход...'
 			
@@ -3423,7 +3438,7 @@ auc={
 			sys_msg.add('Вы выиграли аукцион! Город Ваш!')
 		}
 	},
-	
+		
 	change_bid(d){
 		
 		if (anim3.any_on()) {			
@@ -3457,10 +3472,25 @@ auc={
 		}
 		
 		this.new_bid=_new_bid
-		objects.auc_bid.text=this.new_bid
+		objects.auc_bid.text=this.new_bid+'$'
 		
 	},
 	
+	bcg_down(e){
+		
+		const mx=e.data.global.x/app.stage.scale.x
+		const my=e.data.global.y/app.stage.scale.y
+		
+		
+		if (mx>287&&mx<342&&my>194&&my<238){
+			this.change_bid(-1)
+		}
+		
+		if (mx>457&&mx<512&&my>194&&my<238){
+			this.change_bid(+1)
+		}
+	},
+			
 	decline_btn_down(){
 		
 		if (anim3.any_on()) {			
@@ -3516,6 +3546,13 @@ auc={
 				return
 			}
 			
+			
+			if (this.cur_bid>my_data.money){
+				objects.auc_info.text='У Вас недостаточно денег!'
+				anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
+				return
+			}
+			
 			this.state='on_opp_bid'
 			objects.auc_decline_btn.alpha=0.5
 			objects.auc_make_bid_btn.alpha=0.5			
@@ -3550,7 +3587,7 @@ casino={
 		
 		this.state='ready'
 		this.bid=Math.min(100,my_data.money)
-		objects.casino_bid.text=this.bid
+		objects.casino_bid.text=this.bid+' $'
 		objects.casino_cont.visible=true
 		
 		objects.casino_btn1.x=40
@@ -3563,7 +3600,9 @@ casino={
 		objects.casino_icon2.tilePosition.y=60
 		objects.casino_icon3.tilePosition.y=120
 		
-		objects.casino_info.text='Выберите ставку и нажмите КРУТИТЬ'
+		sys_msg.add('Выберите ставку и нажмите КРУТИТЬ')
+		
+		this.update_win_info()
 	},
 	
 	close(){
@@ -3575,24 +3614,49 @@ casino={
 	change_bid(d){
 		
 		const new_bid=this.bid+d*100
+		
 		if (new_bid>500){
-			objects.casino_info.text='Это максимальная ставка'
+			sys_msg.add('Это максимальная ставка')
 			return
 		}
 		
 		if (new_bid<100){
-			objects.casino_info.text='Это минимальная ставка'
+			sys_msg.add('Это минимальная ставка')
 			return
 		}
 		
 		if (new_bid>my_data.money){
-			objects.casino_info.text='Недостаточно денег!'
+			sys_msg.add('Недостаточно денег!')
 			return
 		}
 		
 		this.bid+=d*100
-		objects.casino_bid.text=this.bid
+		objects.casino_bid.text=this.bid+' $'
+		this.update_win_info()
 		
+	},
+	
+	update_win_info(){
+		
+
+		
+		objects.casino_win_info.text=`x2:  +${this.bid*0.2} $\nx3:  +${this.bid*0.8} $\nx0:  -${this.bid} $\n`
+		
+	},
+	
+	bcg_down(e){
+		
+		const mx=e.data.global.x/app.stage.scale.x
+		const my=e.data.global.y/app.stage.scale.y
+		
+		
+		if (mx>250 &&mx<300&&my>223&&my<263){
+			this.change_bid(-1)
+		}
+		
+		if (mx>370 &&mx<420&&my>223&&my<263){
+			this.change_bid(+1)
+		}
 	},
 			
 	roll_process(slot){		
@@ -3614,16 +3678,14 @@ casino={
 		
 		if (i0===i1&&i1===i2){
 			result=Math.round(this.bid*0.8)
-			objects.casino_info.text='Ваш результат: +'+ result+'$ (с учетом ставки)'
+			sys_msg.add('Ваш результат: +'+ result+' $ (с учетом ставки)')
 		}else if (i0===i1||i1===i2||i0===i2){
 			result=Math.round(this.bid*0.2)
-			objects.casino_info.text='Ваш результат: +'+ result+'$ (с учетом ставки)'
+			sys_msg.add('Ваш результат: +'+ result+' $ (с учетом ставки)')
 		}else{
 			result=-this.bid
-			objects.casino_info.text='Ваш результат: '+ result+'$ (с учетом ставки)'
-		}
-		
-			
+			sys_msg.add('Ваш результат: '+ result+' $ (с учетом ставки)')
+		}			
 		
 		//отправляем информацию сопернику
 		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'casino_result',result,tm:Date.now()})
@@ -3914,14 +3976,140 @@ exch={
 	
 }
 
+plans={
+	
+	plans_progress:[0,0,0],
+	action_made:0,
+	
+	activate(){		
+		
+		this.action_made=0
+		objects.plans_cont.visible=true		
+		this.update()
+		
+	},
+	
+	close_btn_down(){
+		
+		objects.plans_cont.visible=false		
+		
+	},
+	
+	update(){
+		
+		for (let i=0;i<3;i++){			
+			objects.plans_mask[i].width=this.plans_progress[i]
+			
+			if (this.plans_progress[i]===100)
+				objects.plans_btn_title[i].text='Применить'
+			else
+				objects.plans_btn_title[i].text='Доработать'
+			
+			objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
+		}
+		
+	},
+	
+	bcg_down(e){
+		
+		const mx = e.data.global.x/app.stage.scale.x;
+		const my = e.data.global.y/app.stage.scale.y;
+		
+		
+		if (my>250||my<200) return
+		
+		let i=0
+		if (mx>220&&mx<340) i=0
+		if (mx>340&&mx<460) i=1
+		if (mx>460&&mx<580) i=2
+		
+		if (this.action_made){			
+			sys_msg.add('Вы уже сделали выбор')
+			return
+		} 
+		
+		//действие совершено
+		this.action_made=1
+		
+		//активация бонуса
+		if (this.plans_progress[i]===100){		
+
+						
+			if (i===0){
+				//common.change_money(1,5000)
+				const opp_cities=cells_data.filter(d=>{d.owner===2&&d.level===1})
+				if (opp_cities.length===0){
+					sys_msg.add('Эта цель пока недоступна')
+					return
+				} else {
+					const cell=cells_data[opp_cities[0]]
+					cell.owner=0
+					cell.level=0	
+					common.update_view(cell)
+					fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',cell_id:cell.id,id:i,tm:Date.now()})		
+				}
+			}	
+			
+			if (i===1){
+				common.set_money(2,1)
+				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+5000 $)')
+				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})		
+			}	
+			
+			if (i===2){
+				common.change_money(1,5000)
+				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+5000 $)')
+				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})		
+			}					
+			
+			
+			this.plans_progress[i]=0
+			this.update()						
+				
+			
+			return
+		}	
+		
+		this.plans_progress[i]+=25
+		this.plans_progress[i]=Math.min(this.plans_progress[i],100)
+		
+		objects.plans_mask[i].width=this.plans_progress[i]
+		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
+		
+		this.update()
+		
+		
+	},
+	
+	get100_btn_down(){
+		
+		if (this.action_made){			
+			sys_msg.add('Вы уже сделали выбор')
+			return
+		} 
+		this.action_made=1
+		common.change_money(1,100)
+		sys_msg.add('Вы получили 100 $')	
+		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
+	}
+	
+	
+}
+
 common={
 	
 	houses_num:30,
 
 	activate(){
 
-		if (my_turn)
-			dice.activate()
+		if (my_turn){
+			objects.roll_dice_btn.visible=true	
+			objects.end_turn_btn.visible=false				
+		}else{
+			objects.roll_dice_btn.visible=false	
+			objects.end_turn_btn.visible=false			
+		}
+
 
 		this.place_chip(objects.blue_chip,0)
 		this.place_chip(objects.red_chip,0)
@@ -4010,9 +4198,9 @@ common={
 		}
 
 	},
-
+	
 	cell_down(id){
-		/*
+		
 		if(!my_turn){
 			sys_msg.add('Не ваша очередь!')
 			return
@@ -4021,11 +4209,9 @@ common={
 		if(!my_turn_started){
 			sys_msg.add('Сначала нужно бросить кубики...')
 			return
-		}*/
-		
-		
-		const cell=cells_data[id]
-		
+		}
+				
+		const cell=cells_data[id]		
 		
 		//если открыта торговля то переносим в торговлю не улучшеные города
 		if (exch.on){
@@ -4034,10 +4220,10 @@ common={
 		}		
 		
 		
-		/*if(id!==objects.blue_chip.cell_id&&cell.owner===0){
+		if(id!==objects.blue_chip.cell_id&&cell.owner===0){
 			sys_msg.add('Этот город еще не куплен...')
 			return
-		}*/
+		}
 		
 		if (cell.type==='city')
 			city_dlg.show(id)
@@ -4074,12 +4260,11 @@ common={
 			const level_to_s_icon={
 				0:null,
 				1:null,
-				2:assets.blue_s_house0,
-				3:assets.blue_s_house1,
-				4:assets.blue_s_house2,
-				5:assets.blue_s_house3,
-				6:assets.blue_s_house4,
-				7:assets.blue_s_hotel,
+				2:assets.blue_s_house1,
+				3:assets.blue_s_house2,
+				4:assets.blue_s_house3,
+				5:assets.blue_s_house4,
+				6:assets.blue_s_hotel,
 			}		
 					
 			//иконка аукциона
@@ -4094,6 +4279,8 @@ common={
 	},
 	
 	update_country(cell){
+		
+		return
 		
 		//перепроверяем уровень 2 - если все города куплены
 		const country=cells_data.filter(c=>c.country===cell.country)
@@ -4221,12 +4408,20 @@ common={
 				casino.activate()
 		}
 		
+		//цели
+		if (cell.type==='?'){			
+			if(cur_player===1)
+				plans.activate()
+		}
 		
 		//city_dlg.show(cur_cell_id)
 
 		//завершение хода
-		if (cur_player===1)
-			fin.activate()
+		if (cur_player===1){
+			objects.roll_dice_btn.visible=false	
+			objects.end_turn_btn.visible=true		
+		}
+
 
 	},
 
@@ -4267,6 +4462,10 @@ common={
 			exch.activate(move_data)			
 		}
 		
+		if (move_data.type==='plan'){			
+			this.opp_activated_plan(move_data)			
+		}
+		
 		if (move_data.type==='exch_decline'){			
 			exch.opp_decline()			
 		}
@@ -4276,10 +4475,39 @@ common={
 		}
 		
 	},
+	
+	opp_activated_plan(data){		
+		//активация бонуса
+		
+		if (data.id===0){			
+			const cell=cells_data[data.cell_id]
+			cell.owner=0
+			cell.level=0	
+			common.update_view(cell)
+			sys_msg.add('Соперник реализовал план Война')
+		}
+		
+		
+		if (data.id===1){			
+			common.set_money(1,1)
+			sys_msg.add('Соперник достигли цели БАНКРОТ')
+		}
+		
+		if (data.id===2){			
+			common.change_money(2,5000)
+			sys_msg.add('Соперник достигли цели БАНКРОТ')
+		}		
+		
+		if (data.id===100){			
+			common.change_money(2,100)
+			sys_msg.add('Соперник забрал 100 $ вместо достижения цели')
+		}	
+		
+	},
 
 	opp_fin_move_event(){
 
-		dice.activate()
+		objects.roll_dice_btn.visible=true	
 		my_turn=1
 	},
 
@@ -4294,7 +4522,19 @@ common={
 			opp_data.money+=amount
 			objects.opp_card_money.text=opp_data.money+'$'
 		}
+	},
+	
+	set_money(player, amount){
+		
+		if (player===1){
+			my_data.money=amount
+			objects.my_card_money.text=my_data.money+'$'
+		}
 
+		if (player===2){
+			opp_data.money=amount
+			objects.opp_card_money.text=opp_data.money+'$'
+		}		
 	},
 
 	place_chip(chip, cell_id){
@@ -4311,8 +4551,6 @@ common={
 	buy(player,cell,prc){		
 				
 		if (cell.type==='city'){		
-
-
 			
 			
 			const price=prc||(cell.level>0?cell.house_cost:cell.price)
@@ -4320,33 +4558,29 @@ common={
 			this.change_money(player,-price)
 						
 			cell.level++		
-			
-			
-	
-			
-
+					
 			//куплен дом
-			if (cell.level>2&&cell.level<7){
+			if (cell.level>1&&cell.level<6){
 				this.houses_num--
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
 				
 			//куплен отель, 4 дома вернули в банк
-			if (cell.level===7){
+			if (cell.level===6){
 				this.houses_num+=4
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
 			
 			//обновляем всю страну так как там тоже могло поменяться
-			this.update_country(cell)			
-			
-			
+			//this.update_country(cell)		
+			this.update_view(cell)
+						
 			//если не от аукциона
 			if(!prc){
 				if (player===2)
-					sys_msg.add('Соперник купил '+['','город','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
+					sys_msg.add('Соперник купил '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
 				else
-					sys_msg.add('Вы купили '+['','город','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')				
+					sys_msg.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')				
 			}					
 			
 			
@@ -4382,8 +4616,7 @@ common={
 			else
 				cell.level--
 			
-			
-			
+					
 			
 			
 			if(!cell.level) cell.owner=0
@@ -4391,7 +4624,7 @@ common={
 
 			//обновляем всю страну так как там тоже могло поменяться
 			this.update_country(cell)		
-		
+			this.update_view(cell)
 		
 		}
 	}
