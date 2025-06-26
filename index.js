@@ -3333,7 +3333,7 @@ city_dlg={
 		}
 		
 		//если продаем отель - проверка что есть дома в банке
-		if (this.cur_cell.level===7&&common.houses_num<4){
+		if (this.cur_cell.level===6&&common.houses_num<4){
 			sys_msg.add('В банке нет домов для размена!')
 			return
 		}
@@ -3959,8 +3959,9 @@ exch={
 		
 		cells_data[this.send_city_id].owner=2
 		cells_data[this.get_city_id].owner=1
-		common.update_country(cells_data[this.send_city_id])
-		common.update_country(cells_data[this.get_city_id])
+		
+		common.update_view(cells_data[this.send_city_id])
+		common.update_view(cells_data[this.get_city_id])
 				
 		this.close()
 		sys_msg.add('Соперник одобрил сделку!')
@@ -4598,28 +4599,24 @@ common={
 				sys_msg.add('Вы продали '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
 									
 			//продан отель, получаем дома из банка
-			if (cell.level===7){
+			if (cell.level===6) {
 				this.houses_num-=4
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
 			
 			//продан дом, возвращаем дома в банк
-			if (cell.level>2&&cell.level<7){
+			if (cell.level>1&&cell.level<6){
 				this.houses_num++
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
 		
 		
-			const price=Math.round((cell.level>1?cell.house_cost:cell.price)*0.5)
-			if(cell.level===2)
-				cell.level=0
-			else
-				cell.level--
-			
-					
-			
+			cell.level--			
+		
 			
 			if(!cell.level) cell.owner=0
+			
+			const price=Math.round((cell.level>1?cell.house_cost:cell.price)*0.5)			
 			this.change_money(player,price)
 
 			//обновляем всю страну так как там тоже могло поменяться
