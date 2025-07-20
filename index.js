@@ -371,6 +371,23 @@ anim3={
 	}
 }
 
+scheduler={
+
+	ids: new Set(),
+
+	add(func,tm){
+		const id=setTimeout(()=>{func();this.ids.delete(id)},tm)
+		this.ids.add(id)
+	},
+
+	stop_all(){
+
+		this.ids.forEach(id => clearTimeout(id))
+		this.ids.clear()
+	}
+
+}
+
 fbs_once=async function(path){
 	const info=await fbs.ref(path).get();
 	return info.val();
@@ -781,14 +798,14 @@ class cell_class extends PIXI.Container{
 		this.level_icon.anchor.set(0.5,0.5)
 		this.level_icon.y=12
 		this.level_icon.scale_xy=0.7
-		
+
 		this.auc_icon=new PIXI.Sprite(assets.auc_icon)
 		this.auc_icon.anchor.set(0.5,0.5)
 		this.auc_icon.y=1
-		this.auc_icon.scale_xy=0.4	
+		this.auc_icon.scale_xy=0.4
 		this.auc_icon.visible=false
-		
-		
+
+
 		this.icon=new PIXI.Sprite(assets.q_icon)
 		this.icon.anchor.set(0.5,0.5)
 		this.icon.width=40
@@ -1329,7 +1346,7 @@ process_new_message = function(msg) {
 				confirm_dialog.opponent_confirm_play(0);
 
 			//получение согласия на игру
-			
+
 			if (msg.message==='CONF')
 				confirm_dialog.opponent_confirm_play(1);
 
@@ -1348,13 +1365,13 @@ process_new_message = function(msg) {
 			//получение сообщение с ходом игорка
 			if (msg.message==='MOVE')
 				common.process_opp_move(msg);
-			
+
 			if (msg.type==='auc_bid'||msg.type==='auc_buy'||msg.type==='auc_dec'||msg.type==='auc_dec2'||msg.type==='auc_giveup')
 				auc.opp_bid(msg);
-			
+
 			if (['exch','plan','exch_decline','exch_approve','buy','sell','casino_accept','casino_decline','casino_result'].includes(msg.type))
 				common.process_opp_move(msg);
-								
+
 			//получение сообщение с ходом игорка
 			if (msg.message==='CHAT')
 				online_game.chat(msg.data);
@@ -2954,6 +2971,7 @@ sys_msg={
 
 	async add(t){
 
+		console.log(t)
 		if (this.promise_resolve) this.promise_resolve('forced');
 
 		sound.play('popup');
@@ -3007,11 +3025,32 @@ dice={
 
 		this.rnd1=irnd(1,6)
 		this.rnd2=irnd(1,6)
+		
+		const player=objects.blue_chip===chip?1:2
 
 		if (roll_res){
 			this.rnd1=+roll_res[0]
 			this.rnd2=+roll_res[1]
+		}else{
+
+			//выбираем более интересные значения
+			for (let i=0;i<5;i++){
+
+				this.rnd1=irnd(1,6)
+				this.rnd2=irnd(1,6)
+
+				const next_cell_id=(chip.cell_id+this.rnd1+this.rnd2)%cells_data.length
+				const next_cell=cells_data[next_cell_id]
+				
+				//не ходим на свои города
+				if (next_cell.owner!==player)
+					break
+
+			}
+
 		}
+
+
 
 		this.roll_res=this.rnd1.toString()+this.rnd2.toString()
 
@@ -3090,15 +3129,15 @@ fin={
 		//this.click_timer=0
 
 		//отправляем сопернику
-		fbs.ref('inbox/'+opp_data.uid).set({message:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
+		opponent.send({message:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
 
 
 		//теперь уже не мой ход
 		my_turn_started=0
 		my_turn=0
-		
-		objects.roll_dice_btn.visible=false	
-		objects.end_turn_btn.visible=false		
+
+		objects.roll_dice_btn.visible=false
+		objects.end_turn_btn.visible=false
 	}
 
 }
@@ -3107,8 +3146,9 @@ city_dlg={
 
 	cur_cell:0,
 
+
 	check_buy(){
-		
+
 		//проверяем можно ли строить
 		const price=this.cur_cell.level>0?this.cur_cell.house_cost:this.cur_cell.price
 		const next_level=this.cur_cell.level+1
@@ -3132,9 +3172,9 @@ city_dlg={
 		if (next_level-min_level!==1){
 			return 'not_all_complete'
 		}
-		
+
 		return 'ok'
-		
+
 	},
 
 	close_btn_down(){
@@ -3153,7 +3193,7 @@ city_dlg={
 		btn2.alpha=1
 		btn1_t.alpha=1
 		btn2_t.alpha=1
-		
+
 
 		if (num===0){
 			btn1.visible=false
@@ -3213,23 +3253,23 @@ city_dlg={
 		objects.cell_info_prices.text='$ '+cell.rent[1]+'\n$ '+cell.rent[2]+'\n$ '+cell.rent[3]+'\n$ '+cell.rent[4]+'\n$ '+cell.rent[5]+'\n$ '+cell.rent[6]
 		objects.cell_info_params.y=140
 		objects.cell_info_prices.y=140
-		
-		
+
+
 		const btn1=objects.cell_info_btn1
 		const btn2=objects.cell_info_btn2
 		const btn1_t=objects.cell_info_btn1_t
-		const btn2_t=objects.cell_info_btn2_t		
+		const btn2_t=objects.cell_info_btn2_t
 
 		//текущий уровень
 		objects.cell_info_cur_level_hl.visible=cell.level?true:false
 		objects.cell_info_cur_level_hl.y=107+cell.level*21
-		
+
 		if (cell.owner===2){
 			this.place_buttons(1)
 			btn2.alpha=0.5
 			btn2_t.alpha=0.5
 			btn2_t.text='Куплено!'
-			btn2.pointerdown=function(){}	
+			btn2.pointerdown=function(){}
 			return
 		}
 
@@ -3267,137 +3307,136 @@ city_dlg={
 			}
 
 		}
-		
-		
+
+
 		//проверяем можно ли купить и строить
 		if (btn2.visible&&this.check_buy()!=='ok'){
 			btn2.alpha=0.5
 			btn2_t.alpha=0.5
 		}
-	
+
 	},
 
 	show(id){
 
-		const cell=cells_data[id]	
+		const cell=cells_data[id]
 		//objects.cell_info_params.y=90
 		//objects.cell_info_prices.y=90
-		
+
 		objects.cell_info_cont.visible=true
-		this.update(cell)		
-		
+		this.update(cell)
+
 
 	},
-	
+
 	buy(){
-		
+
 		const check_buy_res=this.check_buy()
-		
+
 		if (check_buy_res==='not_all_mine'){
 			sys_msg.add('Нужно купить все города!')
 			return
 		}
-		
+
 		if (check_buy_res==='not_all_complete'){
 			sys_msg.add('Нужно строить последовательно!')
 			return
 		}
-		
+
 		if (check_buy_res==='no_money'){
 			sys_msg.add('Недостаточно средств для покупки!')
 			return
 		}
-		
+
 		if (check_buy_res==='no_houses'){
 			sys_msg.add('В банке нет домов для покупки!')
 			return
 		}
-		
+
 		common.buy(1,this.cur_cell)
-		
+
 		//отправляем сопернику
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
+		opponent.send({sender:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
 
 		this.close()
 	},
-	
+
 	sell(){
-				
+
 		const country=cells_data.filter(d=>d.country===this.cur_cell.country)
 		const max_level=Math.max(...country.map(c=>c.level))
-		
+
 		const new_level=this.cur_cell.level-1
 		if (max_level-new_level>1){
 			sys_msg.add('продавайте последовательно!')
 			return
 		}
-		
+
 		//если продаем отель - проверка что есть дома в банке
 		if (this.cur_cell.level===6&&common.houses_num<4){
 			sys_msg.add('В банке нет домов для размена!')
 			return
 		}
-		
+
 
 		common.sell(1,this.cur_cell)
 
 		this.update(this.cur_cell)
 
 		//отправляем сопернику
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'sell',cell_id:this.cur_cell.id,tm:Date.now()})
-		
+		opponent.send({sender:my_data.uid,type:'sell',cell_id:this.cur_cell.id,tm:Date.now()})
+
 		this.close()
 	},
-	
+
 	close(){
-		
+
 		objects.cell_info_cont.visible=false
-		
+
 	},
 
 
 }
 
 auc={
-	
+
 	cur_bid:0,
 	new_bid:0,
 	state:'on_my_bid',
 	cur_cell:0,
 	started:0,
-	
+
 	activate(cell,state){
-		
+
 		this.state=state
 		this.started=0
-		
+
 		objects.auc_cont.visible=true
 		objects.auc_make_bid_btn.texture=assets.auc_make_bid_btn
-		
+
 		this.new_bid=this.cur_bid=cell.price
 		this.cur_cell=cell
 		objects.auc_bid.text=this.cur_bid+'$'
 		objects.auc_asset_name.text=cell.rus_name
-		
+
 		if (this.state==='on_my_bid'){
 			objects.auc_decline_btn.alpha=1
-			objects.auc_make_bid_btn.alpha=1	
+			objects.auc_make_bid_btn.alpha=1
 			objects.auc_info.text='Делайте ставку, сэр...'
 		}
 		if (this.state==='on_opp_bid'){
 			objects.auc_decline_btn.alpha=0.5
-			objects.auc_make_bid_btn.alpha=0.5			
+			objects.auc_make_bid_btn.alpha=0.5
 			objects.auc_info.text='Ждем ставку соперника...'
 		}
-		
-		
+
+
 	},
-	
+
 	opp_bid(data){
-		
+
 		//соперник предложил ставку
 		if (data.type==='auc_bid'){
-			
 			objects.auc_decline_btn.alpha=1
 			objects.auc_make_bid_btn.alpha=1
 			this.started=1
@@ -3405,32 +3444,31 @@ auc={
 			objects.auc_bid.text=data.bid+'$'
 			anim3.add(objects.auc_bid,{scale_xy:[1, 1.5,'ease2back']}, true, 0.25);
 			objects.auc_info.text='Соперник сделал ставку! Ваш ход...'
-			
 			this.state='on_my_bid'
 		}
-		
+
 		//мы отказались но соперник купил
 		if(data.type==='auc_buy'){
 			common.buy(2,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
 			sys_msg.add('Соперник купил!!!')
 		}
-		
-		//соперник сразу отказался от аукциона, не хочет покупать
+
+		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
 		if(data.type==='auc_dec'){
 			objects.auc_decline_btn.alpha=1
-			objects.auc_make_bid_btn.alpha=1	
+			objects.auc_make_bid_btn.alpha=1
 			objects.auc_make_bid_btn.texture=assets.auc_buy_btn_img
 			objects.auc_info.text='Соперник не участвует, покупаете?'
 			this.state='on_auc_dec'
 		}
-		
+
 		//соперник тоже отказался покупать
 		if(data.type==='auc_dec2'){
 			objects.auc_cont.visible=false
 			sys_msg.add('Соперник тоже отказался покупать!')
 		}
-		
+
 		//соперник отказался от аукциона, но ставка уже сделана
 		if(data.type==='auc_giveup'){
 			common.buy(1,this.cur_cell,this.new_bid)
@@ -3438,127 +3476,127 @@ auc={
 			sys_msg.add('Вы выиграли аукцион! Город Ваш!')
 		}
 	},
-		
+
 	change_bid(d){
-		
-		if (anim3.any_on()) {			
+
+		if (anim3.any_on()) {
 			return
 		}
-		
-		
+
+
 		if (this.state!=='on_my_bid'){
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
 		}
-		
+
 		const _new_bid=this.new_bid+d*50
-		
+
 		if (_new_bid<this.cur_bid){
 			objects.auc_info.text='Меньше поставить нельзя!'
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
 		}
-		
+
 		if (_new_bid===this.cur_bid&&this.started){
 			objects.auc_info.text='Меньше поставить нельзя!'
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
 		}
-		
+
 		if (_new_bid>my_data.money){
 			objects.auc_info.text='У Вас недостаточно денег!'
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
 		}
-		
+
 		this.new_bid=_new_bid
 		objects.auc_bid.text=this.new_bid+'$'
-		
+
 	},
-	
+
 	bcg_down(e){
-		
+
 		const mx=e.data.global.x/app.stage.scale.x
 		const my=e.data.global.y/app.stage.scale.y
-		
-		
+
+
 		if (mx>287&&mx<342&&my>194&&my<238){
 			this.change_bid(-1)
 		}
-		
+
 		if (mx>457&&mx<512&&my>194&&my<238){
 			this.change_bid(+1)
 		}
 	},
-			
+
 	decline_btn_down(){
-		
-		if (anim3.any_on()) {			
+
+		if (anim3.any_on()) {
 			return
 		}
-		
+
 		if (this.state!=='on_my_bid'&&this.state!=='on_auc_dec'){
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
-		}	
-		
-		//соперник сразу отказался от аукциона, тоже отказываемся
+		}
+
+		//отказываемся когда соперник сразу отказался от аукциона
 		if(this.state==='on_auc_dec'){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'auc_dec2',tm:Date.now()})
+			opponent.send({sender:my_data.uid,type:'auc_dec2',tm:Date.now()})
 			sys_msg.add('Вы тоже отказались от покупки!')
 			objects.auc_cont.visible=false
 		}
-		
+
 		//отменяю сразу аукцион, соперник может купить или нет
 		if (!this.started){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'auc_dec',tm:Date.now()})
+			opponent.send({sender:my_data.uid,type:'auc_dec',tm:Date.now()})
 			objects.auc_info.text='Вы отказались от аукциона. Ждем решения соперника...'
 			this.state='on_my_dec'
-			
+
 		}
 
-		
 		//отказываюсь, пусть соперник берет по своей цене
 		if (this.started){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
+			opponent.send({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
 			common.buy(2,this.cur_cell,this.cur_bid)
 			sys_msg.add('Вы проиграли аукцион. Соперник купил!')
 			objects.auc_cont.visible=false
 		}
 
 	},
-	
+
 	make_bid_down(){
-		
-		if (anim3.any_on()) {			
+
+		if (anim3.any_on()) {
 			return
 		}
-		
+
+		//нельзя так делать
 		if (this.state==='on_opp_bid'){
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 			return
 		}
-		
+
+		//пытаемся делать ставку
 		if (this.state==='on_my_bid'){
-			
+
 			if (this.new_bid<=this.cur_bid&&this.started){
 				objects.auc_info.text='Выберите ставку больше!'
 				return
 			}
-			
-			
+
 			if (this.cur_bid>my_data.money){
 				objects.auc_info.text='У Вас недостаточно денег!'
 				anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
 				return
 			}
-			
+
 			this.state='on_opp_bid'
 			objects.auc_decline_btn.alpha=0.5
-			objects.auc_make_bid_btn.alpha=0.5			
-			
-			objects.auc_info.text='Вы сделали ставку. Ждем соперника...'		
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'auc_bid',bid:this.new_bid,tm:Date.now()})			
+			objects.auc_make_bid_btn.alpha=0.5
+
+			objects.auc_info.text='Вы сделали ставку. Ждем соперника...'
+			opponent.send({sender:my_data.uid,type:'auc_bid',bid:this.new_bid,tm:Date.now()})
 		}
 
 		//соперник сразу отказался, можно купить
@@ -3567,243 +3605,201 @@ auc={
 			sys_msg.add('Вы купили с аукциона') //это когда соперник отказался от аукциона
 			objects.auc_cont.visible=false
 			common.buy(1,this.cur_cell)
-			
-			//отправляем сопернику - покупка по обычной цене карточки
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'auc_buy',cell_id:this.cur_cell.id,tm:Date.now()})
 
+			//отправляем сопернику - покупка по обычной цене карточки
+			opponent.send({sender:my_data.uid,type:'auc_buy',cell_id:this.cur_cell.id,tm:Date.now()})
 		}
 	}
-	
-	
+
 }
 
 casino={
-	
+
 	bid:0,
 	roll_on:0,
 	state:'',
-	
-	activate(){		
-		
+
+	activate(){
+
 		this.state='ready'
 		this.bid=Math.min(100,my_data.money)
-		objects.casino_bid.text=this.bid+' $'
+		//objects.casino_bid.text=this.bid+' $'
 		objects.casino_cont.visible=true
-		
+
 		objects.casino_btn1.x=40
 		objects.casino_btn1.visible=true
-		
+
 		objects.casino_btn2.x=200
 		objects.casino_btn2.texture=assets.casino_btn2
-		
-		objects.casino_icon1.tilePosition.y=0
-		objects.casino_icon2.tilePosition.y=60
-		objects.casino_icon3.tilePosition.y=120
-		
-		sys_msg.add('Выберите ставку и нажмите КРУТИТЬ')
-		
-		this.update_win_info()
-	},
-	
-	close(){
-		
-		objects.casino_cont.visible=false
-		
-	},	
-	
-	change_bid(d){
-		
-		const new_bid=this.bid+d*100
-		
-		if (new_bid>500){
-			sys_msg.add('Это максимальная ставка')
-			return
-		}
-		
-		if (new_bid<100){
-			sys_msg.add('Это минимальная ставка')
-			return
-		}
-		
-		if (new_bid>my_data.money){
-			sys_msg.add('Недостаточно денег!')
-			return
-		}
-		
-		this.bid+=d*100
-		objects.casino_bid.text=this.bid+' $'
-		this.update_win_info()
-		
-	},
-	
-	update_win_info(){
-		
 
-		
-		objects.casino_win_info.text=`x2:  +${this.bid*0.2} $\nx3:  +${this.bid*0.8} $\nx0:  -${this.bid} $\n`
-		
+		objects.casino_icon.tilePosition.y=0
+		//objects.casino_icon2.tilePosition.y=60
+		//objects.casino_icon3.tilePosition.y=120
+
+		sys_msg.add('Выберите ставку и нажмите КРУТИТЬ')
+
 	},
-	
-	bcg_down(e){
-		
-		const mx=e.data.global.x/app.stage.scale.x
-		const my=e.data.global.y/app.stage.scale.y
-		
-		
-		if (mx>250 &&mx<300&&my>223&&my<263){
-			this.change_bid(-1)
-		}
-		
-		if (mx>370 &&mx<420&&my>223&&my<263){
-			this.change_bid(+1)
-		}
+
+	close(){
+
+		objects.casino_cont.visible=false
+
 	},
-			
-	roll_process(slot){		
-		slot.tilePosition.y+=10			
+
+	roll_process(slot){
+		slot.tilePosition.y+=10
 	},
-	
-	stop_slot(slot){		
-		slot.icon_id=irnd(0,2)
-		slot.tilePosition.y=60*slot.icon_id		
-	},
-	
+
 	stop(){
+
+		const result=irnd(0,4)
+		objects.casino_icon.tilePosition.y=-90*result
+		let city_id=0
 		
-		const i0=objects.casino_icon1.icon_id
-		const i1=objects.casino_icon2.icon_id
-		const i2=objects.casino_icon3.icon_id
-		
-		let result=0
-		
-		if (i0===i1&&i1===i2){
-			result=Math.round(this.bid*0.8)
-			sys_msg.add('Ваш результат: +'+ result+' $ (с учетом ставки)')
-		}else if (i0===i1||i1===i2||i0===i2){
-			result=Math.round(this.bid*0.2)
-			sys_msg.add('Ваш результат: +'+ result+' $ (с учетом ставки)')
-		}else{
-			result=-this.bid
-			sys_msg.add('Ваш результат: '+ result+' $ (с учетом ставки)')
-		}			
-		
-		//отправляем информацию сопернику
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'casino_result',result,tm:Date.now()})
-		common.change_money(1,result)
+		if (result===0){
+			sys_msg.add('Вы выиграли 300 $')
+			common.change_money(1,300)
+		}
+		if (result===1){
+			sys_msg.add('Вы проиграли 300 $')
+			common.change_money(1,-300)
+		}
+		if (result===2){
+			const empty_cities=common.get_empty_cities(1)
+			if (empty_cities.length){
+				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
+				common.remove_empty_city(empty_city)
+				city_id=empty_city.id
+				sys_msg.add('Вы потреяли город '+empty_city?.rus_name)
+			}else{
+				sys_msg.add('У вас нет одиноких городов')	
+			}
+
+		}
+		if (result===3){
+			const empty_cities=common.get_empty_cities(2)
+			if (empty_cities.length){
+				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
+				common.capture_empty_city(empty_city)
+				city_id=empty_city.id
+				sys_msg.add('Вы захватили город '+empty_city?.rus_name)
+			}else{
+				sys_msg.add('У соперника нет одиноких городов')	
+			}
+		}
+		if (result===4){
+			sys_msg.add('Вы можете купить любой город!')
+			common.casino_buy_bonus=1
+		}
 	
+		opponent.send({sender:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
+
 		this.state='fin'
 		objects.casino_btn1.visible=false
 		objects.casino_btn2.x=120
-		objects.casino_btn2.texture=assets.casino_exit_btn_img		
-		
-	},	
-	
-	btn1_down(){
-			
+		objects.casino_btn2.texture=assets.casino_exit_btn_img
 
-		if (this.state==='roll'){			
-			objects.casino_info.text='процесс уже запущен'
-			return
-		}	
-			
-		if (this.state==='ready'){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'casino_decline',tm:Date.now()})
-			sys_msg.add('Вы отказались от игры в казино')
-			this.close()
-			return
-		}	
-
-		objects.casino_info.text='недоступно'
-		
 	},
-	
-	btn2_down(){		
-		
-		if (this.state==='fin'){			
-			this.close()
-			return			
-		}		
-		
+
+	btn1_down(){
+
+
 		if (this.state==='roll'){
 			objects.casino_info.text='процесс уже запущен'
 			return
-		}	
-		
-		
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'casino_accept',tm:Date.now()})
-		
+		}
+
+		if (this.state==='ready'){
+			opponent.send({sender:my_data.uid,type:'casino_decline',tm:Date.now()})
+			sys_msg.add('Вы отказались от игры в казино')
+			this.close()
+			return
+		}
+
+		objects.casino_info.text='недоступно'
+
+	},
+
+	btn2_down(){
+
+		if (this.state==='fin'){
+			this.close()
+			return
+		}
+
+		if (this.state==='roll'){
+			objects.casino_info.text='процесс уже запущен'
+			return
+		}
+
+		opponent.send({sender:my_data.uid,type:'casino_accept',tm:Date.now()})
+
 		this.state='roll'
-		
-		objects.casino_icon1.tilePosition.y=0	
-		objects.casino_icon2.tilePosition.y=60	
-		objects.casino_icon3.tilePosition.y=120			
-		
-		some_process.casino_roll1=function(){casino.roll_process(objects.casino_icon1)}
-		some_process.casino_roll2=function(){casino.roll_process(objects.casino_icon2)}
-		some_process.casino_roll3=function(){casino.roll_process(objects.casino_icon3)}
-		
-		setTimeout(()=>{this.stop_slot(objects.casino_icon1);some_process.casino_roll1=()=>{}},1500)
-		setTimeout(()=>{this.stop_slot(objects.casino_icon2);some_process.casino_roll2=()=>{}},2500)
-		setTimeout(()=>{this.stop_slot(objects.casino_icon3);some_process.casino_roll3=()=>{};this.stop()},3500)
-		
+
+		objects.casino_icon.tilePosition.y=0
+
+		some_process.casino_roll=function(){casino.roll_process(objects.casino_icon)}
+
+
+		setTimeout(()=>{this.stop();some_process.casino_roll=()=>{}},2500)
+
 	}
-	
+
 }
 
 exch={
-	
+
 	on:0,
 	send_city_id:0,
 	get_city_id:0,
 	offer_balance:0,
 	state:'offer',
-	
+
 	activate(data){
-		
+
 		this.on=1
 		this.state='my_offer'
-		
+
 		objects.exch_btn1.texture=assets.exch_btn1
 		objects.exch_btn2.texture=assets.exch_btn2
-		objects.exch_balance.visible=false
-		
+
 		objects.exch_cont.visible=true
-		
+
 		//если это предложение от соперника
 		if (data){
 			this.activate_offer(data)
 			return
-		}	
-		
+		}
+
 		objects.exch_get_price.text='Выберите города для обмена'
-				
+
 		objects.exch_send_info.visible=true
-		objects.exch_get_info.visible=true		
+		objects.exch_get_info.visible=true
 		objects.exch_send_info.text='ВЫБЕРИТЕ ГОРОД КОТОРЫЙ ХОТИТЕ ОТДАТЬ'
 		objects.exch_get_info.text='ВЫБЕРИТЕ ГОРОД КОТОРЫЙ ХОТИТЕ ПОЛУЧИТЬ'
-		
+
 		objects.exch_send_city.visible=false
-		objects.exch_get_city.visible=false	
-		
+		objects.exch_get_city.visible=false
+
 		objects.exch_send_price.visible=false
-		objects.exch_get_price.visible=false	
+		objects.exch_get_price.visible=false
 	},
-	
+
 	activate_offer(data){
-		
+
 		this.state='opp_offer'
-		
-		
+
+
 		objects.exch_get_price.text='Соперник предлагает обмен...'
-		
-		
+
+
 		objects.exch_btn1.texture=assets.exch_decline_btn_img
 		objects.exch_btn2.texture=assets.exch_approve_btn_img
-		
+
 		//получаем наоборот
 		this.send_city_id=data.g
 		this.get_city_id=data.s
-		
+
 		const send_city=cells_data[data.g]
 		const get_city=cells_data[data.s]
 
@@ -3818,65 +3814,65 @@ exch={
 		objects.exch_get_price.visible=true
 		objects.exch_get_city.text=get_city.rus_name
 		objects.exch_get_price.text=get_city.price+'$'
-		
+
 		this.update_balance()
-		
+
 	},
-	
+
 	update_balance(){
-		
+
 		if (!this.send_city_id||!this.get_city_id) return
-		
+
 		objects.exch_balance.visible=true
-		
+
 		const send_city=cells_data[this.send_city_id]
 		const get_city=cells_data[this.get_city_id]
-		
+
 		const balance=send_city.price-get_city.price
 		this.offer_balance=balance
-		
+
 		//мне доплатить должны
 		if (balance>0){
 			objects.exch_balance.visible=true
 			objects.exch_balance.text='+'+balance+'$'
 			objects.exch_balance.x=objects.exch_get_price.x
 		}
-		
+
 		//мне нужно доплатить
-		if (balance<0){			
+		if (balance<0){
 			objects.exch_balance.visible=true
 			objects.exch_balance.text='+'+Math.abs(balance)+'$'
 			objects.exch_balance.x=objects.exch_send_price.x
 		}
-		
+
 		//равноценная сделка
 		if (balance===0){
 			objects.exch_balance.visible=false
 		}
-		
+
 	},
-	
+
 	cell_down(cell){
-		
+
 		if (this.state!=='my_offer')
 			return
-		
-		
+
+
 		if (cell.type!=='city'){
 			objects.exch_info.text='нужно выбрать город'
 			return
 		}
-		
+
 		if (!cell.owner){
 			objects.exch_info.text='нужно выбрать купленный город'
 			return
 		}
-		
+
 		if (cell.level>1){
 			objects.exch_info.text='нужно выбрать город без зданий'
 			return
 		}
-				
+
 		if (cell.owner===1){
 			this.send_city_id=cell.id
 			objects.exch_send_info.visible=false
@@ -3892,223 +3888,213 @@ exch={
 			objects.exch_get_city.text=cell.rus_name
 			objects.exch_get_price.text=cell.price+'$'
 		}
-		
+
 		this.update_balance()
-		
+
 	},
-	
+
 	btn1_down(){
-		
+
 		if (this.state==='opp_offer'){
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_decline',tm:Date.now()})
 			sys_msg.add('Вы отклонили сделку!')
 		}
-			
 
-		this.close()	
-
-		
+		this.close()
 	},
-	
-	btn2_down(){		
-		
+
+	btn2_down(){
+
 		if (this.state==='opp_offer'){
-			
-			common.change_money(1,this.offer_balance)			
-			common.change_money(2,-this.offer_balance)	
+
+			common.change_money(1,this.offer_balance)
+			common.change_money(2,-this.offer_balance)
 			cells_data[this.send_city_id].owner=2
 			cells_data[this.get_city_id].owner=1
-			common.update_country(cells_data[this.send_city_id])
-			common.update_country(cells_data[this.get_city_id])			
-			
+			common.update_view(cells_data[this.send_city_id])
+			common.update_view(cells_data[this.get_city_id])
+
 			//отправляем сопернику
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_approve',tm:Date.now()})
-			
+
 			sys_msg.add('Вы одобрили сделку сделку!')
 			this.close()
-		}		
-		
+		}
+
 		if (this.state==='my_offer'){
-			
+
 			if (!objects.exch_send_city.visible||!objects.exch_get_city.visible){
 				objects.exch_get_price.text='Выберите города для обмена'
 				return
 			}
-			
+
 			this.state='wait'
-			
+
 			objects.exch_info.text='Ждем решения соперника...'
-			
+
 			//отправляем предложение сопернику
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch',s:this.send_city_id,g:this.get_city_id,tm:Date.now()})
-		
+
 		}
-		
+
 	},
-	
+
 	opp_decline(){
-		
+
 		this.close()
 		sys_msg.add('Соперник отклонил сделку!')
 	},
-	
+
 	opp_approve(){
-		
+
 		common.change_money(1,this.offer_balance)
-		common.change_money(2,-this.offer_balance)	
-		
+		common.change_money(2,-this.offer_balance)
+
 		cells_data[this.send_city_id].owner=2
 		cells_data[this.get_city_id].owner=1
-		
+
 		common.update_view(cells_data[this.send_city_id])
 		common.update_view(cells_data[this.get_city_id])
-				
+
 		this.close()
 		sys_msg.add('Соперник одобрил сделку!')
 	},
-		
+
 	close(){
-		
+
 		this.on=0
 		objects.exch_cont.visible=false
-		
+
 	}
-	
-	
+
+
 }
 
 plans={
-	
+
 	plans_progress:[0,0,0],
 	action_made:0,
-	
-	activate(){		
-		
+
+	activate(){
+
 		this.action_made=0
-		objects.plans_cont.visible=true		
+		objects.plans_cont.visible=true
 		this.update()
-		
+
 	},
-	
+
 	close_btn_down(){
-		
-		objects.plans_cont.visible=false		
-		
+
+		objects.plans_cont.visible=false
+
 	},
-	
+
 	update(){
-		
-		for (let i=0;i<3;i++){			
+
+		for (let i=0;i<3;i++){
 			objects.plans_mask[i].width=this.plans_progress[i]
-			
+
 			if (this.plans_progress[i]===100)
 				objects.plans_btn_title[i].text='Применить'
 			else
 				objects.plans_btn_title[i].text='Доработать'
-			
+
 			objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
 		}
-		
+
 	},
-	
+
 	bcg_down(e){
-		
-		const mx = e.data.global.x/app.stage.scale.x;
-		const my = e.data.global.y/app.stage.scale.y;
-		
-		
+
+		const mx = e.data.global.x/app.stage.scale.x
+		const my = e.data.global.y/app.stage.scale.y
+
 		if (my>250||my<200) return
-		
+
 		let i=0
 		if (mx>220&&mx<340) i=0
 		if (mx>340&&mx<460) i=1
 		if (mx>460&&mx<580) i=2
-		
-		if (this.action_made){			
+
+		if (this.action_made){
 			sys_msg.add('Вы уже сделали выбор')
 			return
-		} 
-		
-		//действие совершено
-		this.action_made=1
-		
-		//активация бонуса
-		if (this.plans_progress[i]===100){		
+		}
 
-						
+		//активация бонуса
+		if (this.plans_progress[i]===100){
+
 			if (i===0){
-				//common.change_money(1,5000)
-				const opp_cities=cells_data.filter(d=>{d.owner===2&&d.level===1})
-				if (opp_cities.length===0){
-					sys_msg.add('Эта цель пока недоступна')
+				//захват одинокого города
+				const empty_cities=common.get_empty_cities(2)
+				if(empty_cities.length){
+					sys_msg.add('Вы достигли цели ЗАХВАТ')
+					const city_cell=empty_cities[irnd[0,empty_cities.length-1]]
+					common.capture_empty_city(city_cell)
+					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
+				}else{
+					sys_msg.add('Данный план невозможно реализовать')
 					return
-				} else {
-					const cell=cells_data[opp_cities[0]]
-					cell.owner=0
-					cell.level=0	
-					common.update_view(cell)
-					fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',cell_id:cell.id,id:i,tm:Date.now()})		
 				}
-			}	
-			
+			}
+
 			if (i===1){
 				common.set_money(2,1)
-				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+5000 $)')
-				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})		
-			}	
-			
+				sys_msg.add('Вы достигли цели КРАЖА')
+				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
+			}
+
 			if (i===2){
-				common.change_money(1,5000)
-				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+5000 $)')
-				fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})		
-			}					
-			
-			
+				common.change_money(1,2000)
+				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+2000 $)')
+				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
+			}
+
 			this.plans_progress[i]=0
-			this.update()						
-				
-			
+			this.update()
+			this.action_made=1
 			return
-		}	
-		
+		}
+
+		this.action_made=1
+
 		this.plans_progress[i]+=25
 		this.plans_progress[i]=Math.min(this.plans_progress[i],100)
-		
+
 		objects.plans_mask[i].width=this.plans_progress[i]
 		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
-		
+
 		this.update()
-		
-		
+
 	},
-	
+
 	get100_btn_down(){
-		
-		if (this.action_made){			
+
+		if (this.action_made){
 			sys_msg.add('Вы уже сделали выбор')
 			return
-		} 
+		}
 		this.action_made=1
 		common.change_money(1,100)
-		sys_msg.add('Вы получили 100 $')	
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
+		sys_msg.add('Вы получили 100 $')
+		opponent.send({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
 	}
-	
-	
+
 }
 
 common={
-	
+
 	houses_num:30,
+	casino_buy_bonus:0,
 
 	activate(){
 
 		if (my_turn){
-			objects.roll_dice_btn.visible=true	
-			objects.end_turn_btn.visible=false				
+			objects.roll_dice_btn.visible=true
+			objects.end_turn_btn.visible=false
 		}else{
-			objects.roll_dice_btn.visible=false	
-			objects.end_turn_btn.visible=false			
+			objects.roll_dice_btn.visible=false
+			objects.end_turn_btn.visible=false
 		}
 
 
@@ -4120,27 +4106,27 @@ common={
 		//начальный баланс
 		my_data.money=1000
 		opp_data.money=1000
-		
+
 		//количество домов
 		this.houses_num=30
 		objects.houses_info.text='Домов в банке: '+this.houses_num
 
 		//показываем и заполняем мою карточку
-		anim3.add(objects.my_card_cont,{y:[-200,objects.my_card_cont.sy,'linear']}, true, 0.3);
+		anim3.add(objects.my_card_cont,{y:[-200,objects.my_card_cont.sy,'linear'],alpha:[0,1,'linear']}, true, 0.3);
 		objects.my_card_name.set2(my_data.name,160);
 		objects.my_card_rating.text=my_data.rating;
 		objects.my_card_money.text=my_data.money;
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;
 
 		//показываем и заполняем карточку соперника
-		anim3.add(objects.opp_card_cont,{y:[-200,objects.opp_card_cont.sy,'linear']}, true, 0.3);
+		anim3.add(objects.opp_card_cont,{y:[-200,objects.opp_card_cont.sy,'linear'],alpha:[0,1,'linear']}, true, 0.3);
 		objects.opp_card_name.set2(opp_data.name,160);
 		objects.opp_card_rating.text=opp_data.rating;
 		objects.opp_card_money.text=opp_data.money;
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;
 
 		for (let i=0;i<24;i++){
-			
+
 			const cell_obj=objects.cells[i]
 			const cell=cells_data[i]
 
@@ -4148,14 +4134,14 @@ common={
 				cell_obj.bcg.texture=assets.big_cell_bcg
 				cell_obj.bcg.width=83
 				cell_obj.bcg.height=83
-			}else{				
+			}else{
 				cell_obj.bcg.texture=assets.cell_bcg
 				cell_obj.bcg.width=74
-				cell_obj.bcg.height=74							
-			}		
-			
+				cell_obj.bcg.height=74
+			}
 
-			
+
+
 			if (cell.type==='city'){
 				cell_obj.price.text=cell.price+'$'
 				cell_obj.interactive=true
@@ -4164,7 +4150,7 @@ common={
 				cell_obj.auc_icon.visible=cell.auc?true:false
 				cell_obj.city_name.text=cell.rus_name
 			}
-			
+
 			if (cell.type==='casino'){
 				cell_obj.bcg.texture=assets.big_cell_casino_bcg
 				cell_obj.price.visible=false
@@ -4175,7 +4161,7 @@ common={
 				cell_obj.icon.visible=false
 
 			}
-			
+
 			if (cell.type==='start'){
 				cell_obj.bcg.texture=assets.big_cell_start_bcg
 				cell_obj.price.visible=false
@@ -4186,7 +4172,7 @@ common={
 				cell_obj.icon.visible=false
 
 			}
-			
+
 			if (cell.type==='?'){
 				cell_obj.price.visible=false
 				cell_obj.city_name.visible=false
@@ -4195,13 +4181,13 @@ common={
 				cell_obj.auc_icon.visible=false
 				cell_obj.icon.visible=true
 			}
-			
+
 		}
 
 	},
-	
+
 	cell_down(id){
-		
+
 		if(!my_turn){
 			sys_msg.add('Не ваша очередь!')
 			return
@@ -4211,27 +4197,33 @@ common={
 			sys_msg.add('Сначала нужно бросить кубики...')
 			return
 		}
-				
-		const cell=cells_data[id]		
-		
+
+		const cell=cells_data[id]
+
 		//если открыта торговля то переносим в торговлю не улучшеные города
 		if (exch.on){
 			exch.cell_down(cell)
 			return
-		}		
-		
-		
-		if(id!==objects.blue_chip.cell_id&&cell.owner===0){
-			sys_msg.add('Этот город еще не куплен...')
-			return
 		}
 		
+		
+		if(cell.owner===0&&id!==objects.blue_chip.cell_id&&!this.casino_buy_bonus){
+				sys_msg.add('Этот город еще не куплен...')
+				return
+		}
+
+
+		//if (cell.owner!==0){
+		//	sys_msg.add('Этот город уже куплен!')
+		//	return
+		//}
+
 		if (cell.type==='city')
 			city_dlg.show(id)
 	},
-	
+
 	exch_down(){
-		
+
 		if(!my_turn){
 			sys_msg.add('Не ваша очередь!')
 			return
@@ -4241,22 +4233,22 @@ common={
 			sys_msg.add('Сначала нужно бросить кубики...')
 			return
 		}
-		
-		
+
+
 		exch.activate()
-		
+
 	},
 
 	update_view(cell){
-		
+
 		const cell_spr=objects.cells[cell.id]
 
 		if (cell.owner===1)	cell_spr.bcg.texture=assets.cell_bcg_blue
 		if (cell.owner===2)	cell_spr.bcg.texture=assets.cell_bcg_red
 		if (cell.owner===0)	cell_spr.bcg.texture=assets.cell_bcg
-	
+
 		if (cell.type==='city'){
-			
+
 
 			const level_to_s_icon={
 				0:null,
@@ -4266,45 +4258,45 @@ common={
 				4:assets.blue_s_house3,
 				5:assets.blue_s_house4,
 				6:assets.blue_s_hotel,
-			}		
-					
+			}
+
 			//иконка аукциона
-			cell_spr.auc_icon.visible=(cell.level===0&&cell.auc)?true:false			
-			
+			cell_spr.auc_icon.visible=(cell.level===0&&cell.auc)?true:false
+
 			//цена
 			cell_spr.price.visible=cell.level>0?false:true
-			cell_spr.level_icon.texture=level_to_s_icon[cell.level||0]			
-			
+			cell_spr.level_icon.texture=level_to_s_icon[cell.level||0]
+
 		}
 
 	},
-	
+
 	update_country(cell){
-		
+
 		return
-		
+
 		//перепроверяем уровень 2 - если все города куплены
 		const country=cells_data.filter(c=>c.country===cell.country)
-		
+
 		const all_level_1=country.every(c=>{return c.level===1})
 		const all_level_2=country.every(c=>{return c.level===2})
 		const same_owned=country.every(c=>{return c.owner===1})||country.every(c=>{return c.owner===2})
-		
+
 		//апгрейд на 2 уровень
 		if (all_level_1&&same_owned)
 			for (const city of country)
 				city.level=2
-			
+
 		//даунгрейд на 1 уровень
-		const min_level=Math.min(...country.map(c=>c.level))		
+		const min_level=Math.min(...country.map(c=>c.level))
 		for (const city of country){
 			if (city.level===2&&(!same_owned || min_level<2))
 				city.level=1
 		}
-		
+
 		for (const city of country)
 			this.update_view(city)
-		
+
 	},
 
 	async move_chip(chip, steps){
@@ -4312,7 +4304,7 @@ common={
 		let cur_cell_id=chip.cell_id
 
 		const opp_chip=objects.blue_chip===chip?objects.red_chip:objects.blue_chip
-		
+
 		//возвращаем отклоненный чип на пустое место
 		if (chip.cell_id===opp_chip.cell_id){
 			const cx=opp_chip.x
@@ -4321,8 +4313,8 @@ common={
 			const ty=objects.cells[opp_chip.cell_id].y+chip_anchors[opp_chip.cell_id].dy*42
 			anim3.add(opp_chip,{x:[cx, tx,'linear'],y:[cy, ty,'linear']}, true, 0.15);
 		}
-		
-		
+
+
 		const player=objects.blue_chip===chip?1:2
 		for (let i=0;i<steps;i++){
 
@@ -4334,10 +4326,10 @@ common={
 			const cx=chip.x
 			const cy=chip.y
 			const cang=chip.angle
-			
+
 			//зарплата
 			if (next_cell_id===0){
-				this.change_money(player,200)			
+				this.change_money(player,200)
 			}
 
 			const tar_cell=objects.cells[next_cell_id]
@@ -4360,23 +4352,30 @@ common={
 		const cur_player=chip===objects.blue_chip?1:2
 		const opp_player=3-cur_player
 
-		//можно покупать и продавать что захочешь
-		if (cur_player===1)
-			my_turn_started=1;
 
-		//участок соперника
+		//расчет ренты за участок соперника
 		if (cell.owner===opp_player){
-			
+
 			if (cell.type==='city'){
 				this.change_money(cur_player,-cell.rent[cell.level])
 				this.change_money(opp_player,+cell.rent[cell.level])
-				
+
 				if(cell.owner===1)
 					sys_msg.add(`Получите ренту: ${cell.rent[cell.level]}$`)
 				else
 					sys_msg.add(`Чужой город! Заплатите ренту: ${cell.rent[cell.level]}$`)
 			}
-			
+
+		}
+
+		//можно покупать и продавать что захочешь
+		if (cur_player===1)
+			my_turn_started=1
+
+		//передаем сопернику обработку хода
+		if (cur_player===2){
+			opponent.process_move(cell)
+			return
 		}
 
 		//мой город
@@ -4385,42 +4384,41 @@ common={
 		}
 
 		//свободная клетка
-		if (cell.price&&cell.owner===0){		
+		if (cell.price&&cell.owner===0){
 
 			if (cell.auc){
-				if (cur_player===1){
+				if (cur_player===1)
 					auc.activate(cell,'on_my_bid')
-				}
-				if (cur_player===2){
+
+				if (cur_player===2&&opponent!==bot_game)
 					auc.activate(cell,'on_opp_bid')
-				}					
+
 			}else{
 				if (cur_player===1){
 					if (cell.type==='city')
-						city_dlg.show(cell.id)	
-				}				
+						city_dlg.show(cell.id)
+				}
 			}
-
 		}
-		
+
 		//казино
-		if (cell.type==='casino'){			
+		if (cell.type==='casino'){
 			if(cur_player===1)
 				casino.activate()
 		}
-		
+
 		//цели
-		if (cell.type==='?'){			
+		if (cell.type==='?'){
 			if(cur_player===1)
 				plans.activate()
 		}
-		
+
 		//city_dlg.show(cur_cell_id)
 
 		//завершение хода
 		if (cur_player===1){
-			objects.roll_dice_btn.visible=false	
-			objects.end_turn_btn.visible=true		
+			objects.roll_dice_btn.visible=false
+			objects.end_turn_btn.visible=true
 		}
 
 
@@ -4445,71 +4443,105 @@ common={
 		if (move_data.type==='fin'){
 			common.opp_fin_move_event()
 		}
-	
+
 		if (move_data.type==='casino_accept'){
 			sys_msg.add('Соперник играет в казино...')
 		}
-		
+
 		if (move_data.type==='casino_decline'){
 			sys_msg.add('Соперник отказался от казино...')
 		}
-		
+
 		if (move_data.type==='casino_result'){
 			this.change_money(2,move_data.result)
 			sys_msg.add('Результат соперника в казино: '+move_data.result+'$')
 		}
-	
-		if (move_data.type==='exch'){			
-			exch.activate(move_data)			
+
+		if (move_data.type==='exch'){
+			exch.activate(move_data)
 		}
-		
-		if (move_data.type==='plan'){			
-			this.opp_activated_plan(move_data)			
+
+		if (move_data.type==='plan'){
+			this.opp_activated_plan(move_data)
 		}
-		
-		if (move_data.type==='exch_decline'){			
-			exch.opp_decline()			
+
+		if (move_data.type==='exch_decline'){
+			exch.opp_decline()
 		}
-		
-		if (move_data.type==='exch_approve'){			
-			exch.opp_approve()			
+
+		if (move_data.type==='exch_approve'){
+			exch.opp_approve()
 		}
-		
+
 	},
-	
-	opp_activated_plan(data){		
+
+	opp_activated_plan(data){
 		//активация бонуса
-		
-		if (data.id===0){			
-			const cell=cells_data[data.cell_id]
-			cell.owner=0
-			cell.level=0	
-			common.update_view(cell)
+
+		if (data.id===0){
+
+			const my_cities=cells_data.filter(d=>{return d.owner===1&&d.level===1})
+			my_cities.forEach(c=>{
+				c.owner=0
+				c.level=0
+				common.update_view(c)
+			})
 			sys_msg.add('Соперник реализовал план Война')
 		}
-		
-		
-		if (data.id===1){			
+
+		if (data.id===1){
 			common.set_money(1,1)
 			sys_msg.add('Соперник достигли цели БАНКРОТ')
 		}
-		
-		if (data.id===2){			
-			common.change_money(2,5000)
-			sys_msg.add('Соперник достигли цели БАНКРОТ')
-		}		
-		
-		if (data.id===100){			
+
+		if (data.id===2){
+			common.change_money(2,2000)
+			sys_msg.add('Соперник достигли цели Наследство')
+		}
+
+		if (data.id===100){
 			common.change_money(2,100)
 			sys_msg.add('Соперник забрал 100 $ вместо достижения цели')
-		}	
-		
+		}
+
 	},
 
 	opp_fin_move_event(){
 
-		objects.roll_dice_btn.visible=true	
+		objects.roll_dice_btn.visible=true
 		my_turn=1
+	},
+	
+	get_empty_cities(player){
+	
+		//вычисляем незастроенные города и не монополизированных стран
+		const empty_cities=[]
+		for (let cell of cells_data){
+			if(cell.owner===player&&cell.level===1){
+				const country=cells_data.filter(d=>d.country===cell.country)
+				const no_monopolised=country.some(c=>{return c.owner!==player})
+				if (no_monopolised)
+					empty_cities.push(cell)
+			}
+		}
+		return empty_cities
+	},
+	
+	remove_empty_city(city_cell){
+		
+		//убираем владельца города
+		city_cell.owner=0
+		city_cell.level=0
+		this.update_view(city_cell)
+		
+	},
+	
+	capture_empty_city(city_cell){
+		
+		//меняем владельца горда
+		city_cell.owner=3-city_cell.owner
+		this.update_view(city_cell)
+		
 	},
 
 	change_money(player,amount){
@@ -4524,9 +4556,9 @@ common={
 			objects.opp_card_money.text=opp_data.money+'$'
 		}
 	},
-	
+
 	set_money(player, amount){
-		
+
 		if (player===1){
 			my_data.money=amount
 			objects.my_card_money.text=my_data.money+'$'
@@ -4535,7 +4567,7 @@ common={
 		if (player===2){
 			opp_data.money=amount
 			objects.opp_card_money.text=opp_data.money+'$'
-		}		
+		}
 	},
 
 	place_chip(chip, cell_id){
@@ -4549,107 +4581,105 @@ common={
 
 	},
 
-	buy(player,cell,prc){		
-				
-		if (cell.type==='city'){		
-			
-			
+	buy(player,cell,prc){
+
+		if (cell.type==='city'){
+
+
 			const price=prc||(cell.level>0?cell.house_cost:cell.price)
 			cell.owner=player
 			this.change_money(player,-price)
-						
-			cell.level++		
-					
+
+			cell.level++
+			
+			this.casino_buy_bonus=0
+			
+			//анимация
+			anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
+
 			//куплен дом
 			if (cell.level>1&&cell.level<6){
 				this.houses_num--
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
-				
+
 			//куплен отель, 4 дома вернули в банк
 			if (cell.level===6){
 				this.houses_num+=4
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
-			
+
 			//обновляем всю страну так как там тоже могло поменяться
-			//this.update_country(cell)		
+			//this.update_country(cell)
 			this.update_view(cell)
-						
+
 			//если не от аукциона
 			if(!prc){
 				if (player===2)
-					sys_msg.add('Соперник купил '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
+					sys_msg.add('Соперник купил '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 				else
-					sys_msg.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')				
-			}					
-			
-			
+					sys_msg.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+			}
+
+
 		}
 
 	},
 
 	sell(player,cell){
 
-		if (cell.type==='city'){	
-		
+		if (cell.type==='city'){
+
 			if (player===2)
-				sys_msg.add('Соперник продал '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
+				sys_msg.add('Соперник продал '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 			else
-				sys_msg.add('Вы продали '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')	
-									
+				sys_msg.add('Вы продали '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+
 			//продан отель, получаем дома из банка
 			if (cell.level===6) {
 				this.houses_num-=4
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
-			
+
 			//продан дом, возвращаем дома в банк
 			if (cell.level>1&&cell.level<6){
 				this.houses_num++
 				objects.houses_info.text='Домов в банке: '+this.houses_num
 			}
-		
-		
-			cell.level--			
-		
+
+
+			cell.level--
 			
+			//анимация
+			anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
+
 			if(!cell.level) cell.owner=0
-			
-			const price=Math.round((cell.level>1?cell.house_cost:cell.price)*0.5)			
+
+			const price=Math.round((cell.level>1?cell.house_cost:cell.price)*0.5)
 			this.change_money(player,price)
 
 			//обновляем всю страну так как там тоже могло поменяться
-			this.update_country(cell)		
+
 			this.update_view(cell)
-		
+
 		}
 	}
 }
 
 bot_game={
 
+	plans_progress:[0,0,0],
+
 	activate(){
 
 
 		//показываем и заполняем мою карточку
-		objects.my_card_name.set2(my_data.name,150);
-		objects.my_card_rating.text=my_data.rating;
-		objects.my_card_rating.visible=true;
-		objects.my_avatar.texture=players_cache.players[my_data.uid].texture;
-		anim3.add(objects.my_card_cont,{x:[-100, objects.my_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.5,'linear');
-
-		objects.opp_card_name.set2(opp_data.name,150);
-		objects.opp_card_rating.text=opp_data.rating;
-		objects.opp_avatar_frame.texture=assets.avatar_frame;
-		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;
-		anim3.add(objects.opp_card_cont,{x:[800, objects.opp_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.5,'linear');
-
-		objects.cells_cont.visible=true
-
+		opp_data.uid='bot'
+		opponent=this
+		my_turn=1
 
 		for (let i=0;i<24;i++){
-			
+
 			const cell_obj=objects.cells[i]
 			const cell=cells_data[i]
 
@@ -4657,14 +4687,12 @@ bot_game={
 				cell_obj.bcg.texture=assets.big_cell_bcg
 				cell_obj.bcg.width=83
 				cell_obj.bcg.height=83
-			}else{				
+			}else{
 				cell_obj.bcg.texture=assets.cell_bcg
 				cell_obj.bcg.width=74
-				cell_obj.bcg.height=74							
-			}		
-			
+				cell_obj.bcg.height=74
+			}
 
-			
 			if (cell.type==='city'){
 				cell_obj.price.text=cell.price+'$'
 				cell_obj.interactive=true
@@ -4673,7 +4701,7 @@ bot_game={
 				cell_obj.auc_icon.visible=cell.auc?true:false
 				cell_obj.city_name.text=cell.rus_name
 			}
-			
+
 			if (cell.type==='casino'){
 				cell_obj.bcg.texture=assets.big_cell_casino_bcg
 				cell_obj.price.visible=false
@@ -4684,7 +4712,7 @@ bot_game={
 				cell_obj.icon.visible=false
 
 			}
-			
+
 			if (cell.type==='start'){
 				cell_obj.bcg.texture=assets.big_cell_start_bcg
 				cell_obj.price.visible=false
@@ -4695,7 +4723,7 @@ bot_game={
 				cell_obj.icon.visible=false
 
 			}
-			
+
 			if (cell.type==='?'){
 				cell_obj.price.visible=false
 				cell_obj.city_name.visible=false
@@ -4704,12 +4732,295 @@ bot_game={
 				cell_obj.auc_icon.visible=false
 				cell_obj.icon.visible=true
 			}
-			
+
 		}
 
 		common.activate();
 
+	},
+
+	send(data){
+
+		console.log(data)
+		if (data.type==='auc_dec'){
+			if (my_turn){
+
+				scheduler.add(()=>{
+					if(opp_data.money>auc.new_bid)
+						auc.opp_bid({type:'auc_buy'})
+					else
+						auc.opp_bid({type:'auc_dec2'})
+				},1000)
+			}else{
+				common.opp_fin_move_event()
+			}
+		}
+
+		//соперник купил если бот отказался сразу
+		if (data.type==='auc_buy'){
+			if (!my_turn)
+				common.opp_fin_move_event()
+		}
+
+		//торговля
+		if (data.type==='auc_bid'){
+
+			const new_bid=auc.new_bid+50
+			const left_after_buy=opp_data.money-new_bid
+			const country=cells_data.filter(d=>d.country===auc.cur_cell.country)
+			const country_size=country.length
+			const my_in_country=country.filter(c=>{return c.owner===2}).length
+			
+			const risk_map={'30':300,'31':150,'32':50,'20':150,'21':50}
+			const min_left=risk_map[country_size+''+my_in_country]
+
+			if(left_after_buy<min_left){
+				scheduler.add(()=>{
+					auc.opp_bid({type:'auc_giveup'})
+					if (!my_turn)
+						common.opp_fin_move_event()
+				},1000)
+
+			}
+			else{
+				
+				scheduler.add(()=>{auc.opp_bid({type:'auc_bid',bid:new_bid})},1000)					
+
+			}
+
+		}
+
+		//игрок отказался и бот купил
+		if (data.type==='auc_giveup'){
+			if (!my_turn)
+				common.opp_fin_move_event()
+		}
+
+		//игрок завершил ход, ходит бот
+		if (data.type==='fin'){
+			dice.roll_and_go(objects.red_chip)
+		}
+
+	},
+
+	try_upgrade_some_city(){
+
+		for (const cell of cells_data){
+
+			if (cell.type==='city'&&cell.owner===2){
+
+				const cur_country=cell.country
+				const cur_cities=cells_data.filter(d=>d.country===cur_country)
+				const min_level=Math.min(...cur_cities.map(c=>c.level))
+				const all_mine=cur_cities.every(c=>c.owner===2)
+				const next_level=cell.level+1
+				const price=cell.level>0?cell.house_cost:cell.price
+				const houses_available=next_level===6?1:common.houses_num
+				const can_upgrade=all_mine&&(next_level-min_level===1)&&opp_data.money>=price&&next_level<7&&houses_available
+				if (can_upgrade){
+					common.buy(2,cell)
+					return
+
+				}
+
+			}
+
+		}
+
+	},
+
+	try_sell_some(){
+
+		//если баланс восстановлен
+		if (opp_data.money>0) {
+			scheduler.add(()=>{common.opp_fin_move_event()},500)
+			return;
+		}
+
+		//продаем первое попавшееся
+		let cell_to_sell=null
+		for (const cell of cells_data){
+			if (cell.type==='city'&&cell.owner===2){
+
+				const cur_country=cell.country
+				const cur_cities=cells_data.filter(d=>d.country===cur_country)
+				const max_level=Math.max(...cur_cities.map(c=>c.level))
+				const all_mine=cur_cities.every(c=>c.owner===2)
+				const next_level=cell.level-1
+
+				const can_sell=(all_mine&&max_level-next_level===1)||(!all_mine&&next_level===0)
+				if (can_sell){
+					cell_to_sell=cell
+					break
+				}
+			}
+		}
+
+		if (cell_to_sell){
+			scheduler.add(()=>{common.sell(2,cell_to_sell)},1000)
+			scheduler.add(()=>{this.try_sell_some()},2000)
+		}else{
+			alert('нечем заплатить боту')
+		}
+
+	},
+
+	process_move(cell){
+
+		//свободная клетка
+		if (cell.type==='city'&&cell.owner===0){
+
+			if (cell.auc){
+				//делаем начальную ставку
+				if (opp_data.money>cell.price){
+					scheduler.add(()=>{auc.activate(cell,'on_opp_bid')},1000)
+					scheduler.add(()=>{auc.opp_bid({type:'auc_bid',bid:auc.cur_bid})},2000)
+				}else{
+					scheduler.add(()=>{auc.activate(cell,'on_opp_bid')},1000)
+					scheduler.add(()=>{auc.opp_bid({type:'auc_dec'})},2000)
+				}
+
+
+			}else{
+				//пытаемся купить город
+				if (cell.type==='city'){
+					if (opp_data.money>cell.price){
+						scheduler.add(()=>{common.buy(2,cell)},1000)
+						scheduler.add(()=>{this.try_upgrade_some_city()},1500)
+						scheduler.add(()=>{common.opp_fin_move_event()},2000)
+					}else{
+						scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+						scheduler.add(()=>{common.opp_fin_move_event()},1500)
+					}
+				}
+			}
+		}
+
+		//город бота, просто завершаем
+		if (cell.owner===2){
+			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+			scheduler.add(()=>{common.opp_fin_move_event()},2000)
+		}
+
+		//город игрока, просто завершаем (рента оплачена)
+		if (cell.owner===1){
+
+			if (opp_data.money<=0){
+				this.try_sell_some()
+			}else{
+				scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+				scheduler.add(()=>{common.opp_fin_move_event()},2000)
+			}
+
+
+		}
+
+		//стартовая фигура, просто завершаем
+		if (cell.id===0){
+			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+			scheduler.add(()=>{common.opp_fin_move_event()},2000)
+		}
+
+		//казино, пока не играем
+		if (cell.type==='casino'){
+			
+			this.play_casino()
+			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+			scheduler.add(()=>{common.opp_fin_move_event()},2000)
+		}
+
+		//цели
+		if (cell.type==='?'){
+
+			if (this.plans_progress[0]>=100){
+				const empty_cities=common.get_empty_cities(1)
+				
+				if(empty_cities.length) {
+					const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
+					common.capture_empty_city(empty_city)
+					this.plans_progress[0]=0
+					sys_msg.add('Соперника реализовал план Захват ('+empty_city.rus_name+')')
+				}else{
+					
+					sys_msg.add('Соперника не может реализовать план Захват!')
+				}
+			}else{
+				this.plans_progress[0]+=25
+			}
+
+			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
+			scheduler.add(()=>{common.opp_fin_move_event()},2000)
+		}
+
+	},
+	
+	play_casino(){
+		
+		common.process_opp_move({type:'casino_accept'})
+		
+		const result=irnd(0,4)
+		let city_id=0
+		
+		if (result===0){
+			sys_msg.add('Соперник выиграл 300 $')
+			common.change_money(2,300)
+		}
+		if (result===1){
+			sys_msg.add('Соперник проиграл 300 $')
+			common.change_money(2,-300)
+		}
+		if (result===2){
+			const empty_cities=common.get_empty_cities(2)
+			if (empty_cities.length){
+				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
+				common.remove_empty_city(empty_city)
+				city_id=empty_city.id
+				sys_msg.add('Соперник потреяли город '+empty_city?.rus_name)
+			}else{
+				sys_msg.add('У соперника нет одиноких городов')	
+			}
+
+		}
+		if (result===3){
+			const empty_cities=common.get_empty_cities(1)
+			if (empty_cities.length){
+				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
+				common.capture_empty_city(empty_city)
+				city_id=empty_city.id
+				sys_msg.add('Соперник захватили Ваш город '+empty_city.rus_name)
+			}else{
+				sys_msg.add('У вас нет одиноких городов, повезло')	
+			}
+		}
+		if (result===4){
+			
+			const free_cities=cells_data.filter(c=>c.owner===0)
+			for (let city of free_cities){
+				if (city.price<opp_data.money){
+					
+					common.buy(2,city)
+					sys_msg.add('Соперник купил город по акции: '+city.rus_name)
+					return				
+				}				
+			}
+			
+			sys_msg.add('Соперник не смог купил город по акции!')
+		}
+		
+		
 	}
+
+}
+
+online_game={
+
+
+	send(data){
+
+		fbs.ref('inbox/'+opp_data.uid).set(data)
+
+	}
+
 
 }
 
