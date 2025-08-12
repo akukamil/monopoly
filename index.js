@@ -4376,6 +4376,8 @@ common={
 		//количество домов
 		this.houses_num=30
 		objects.houses_info.text='Домов в банке: '+this.houses_num
+		
+		anim3.add(objects.board_bcg,{alpha:[0,1,'linear']}, true, 0.3);
 
 		//показываем и заполняем мою карточку
 		anim3.add(objects.my_card_cont,{y:[-200,objects.my_card_cont.sy,'linear'],alpha:[0,1,'linear']}, true, 0.3);
