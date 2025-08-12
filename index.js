@@ -796,7 +796,7 @@ class cell_class extends PIXI.Container{
 
 		this.level_icon=new PIXI.Sprite()
 		this.level_icon.anchor.set(0.5,0.5)
-		this.level_icon.y=0
+		this.level_icon.y=5
 		this.level_icon.scale_xy=0.7
 		//this.level_icon.alpha=0.4
 
@@ -1400,53 +1400,6 @@ process_new_message = function(msg) {
 
 }
 
-message = {
-
-	promise_resolve :0,
-
-	async add(data={text:'---', timeout:3000,sound_name:'online_message',sender:'me'}) {
-
-		if (this.promise_resolve!==0) this.promise_resolve('forced');
-
-		//воспроизводим звук
-		sound.play(data.sound_name);
-
-		objects.message_text.text=data.text;
-
-
-		if (data.sender==='me'){
-			objects.message_cont.x=90;
-			objects.message_bcg.scale_x=-0.66666;
-		}else{
-
-			objects.message_cont.x=430;
-			objects.message_bcg.scale_x=0.666666;
-
-		}
-
-		await anim3.add(objects.message_cont,{alpha:[0,1,'linear']}, true, 0.25,false);
-
-		const res = await new Promise((resolve, reject) => {
-				message.promise_resolve = resolve;
-				setTimeout(resolve, data.timeout)
-			}
-		);
-
-		//это если насильно закрываем
-		if (res==='forced') return;
-
-		anim3.add(objects.message_cont,{alpha:[1, 0,'linear']}, false, 0.25,false);
-	},
-
-	clicked() {
-
-
-		message.promise_resolve();
-
-	}
-
-}
-
 sys_msg={
 
 	promise_resolve :0,
@@ -1458,8 +1411,8 @@ sys_msg={
 		sound.play('popup');
 
 		//показываем сообщение
-		objects.t_sys_msg.text=t;
-		const ares=await anim3.add(objects.sys_msg_cont,{y:[-50,-20,'linear']}, true, 0.25,false);
+		objects.sys_msg_text.text=t;
+		const ares=await anim3.add(objects.sys_msg_cont,{alpha:[0,1,'linear']}, true, 0.25,false);
 		if (ares==='killed') return;
 
 		//ждем
@@ -1472,7 +1425,7 @@ sys_msg={
 		//это если насильно закрываем
 		if (res==='forced') return;
 
-		anim3.add(objects.sys_msg_cont,{y:[-20,-50,'linear']}, false, 0.25,false);
+		anim3.add(objects.sys_msg_cont,{alpha:[1,0,'linear']}, false, 0.25,false);
 
 	}
 
@@ -2758,38 +2711,6 @@ pref={
 	}
 }
 
-sys_msg={
-
-	promise_resolve :0,
-
-	async add(t){
-
-		console.log(t)
-		if (this.promise_resolve) this.promise_resolve('forced');
-
-		sound.play('popup');
-
-		//показываем сообщение
-		objects.info.text=t;
-		const ares=await anim3.add(objects.info,{alpha:[0,1,'linear']}, true, 0.25,false);
-		if (ares==='killed') return;
-
-		//ждем
-		const res = await new Promise(resolve => {
-				sys_msg.promise_resolve = resolve;
-				setTimeout(resolve,5000)
-			}
-		);
-
-		//это если насильно закрываем
-		if (res==='forced') return;
-
-		anim3.add(objects.info,{alpha:[1,0,'linear']}, false, 0.25,false);
-
-	}
-
-}
-
 dice={
 
 	roll_timer:0,
@@ -3929,13 +3850,8 @@ online_game={
 		//my_data.draw_rating = this.calc_new_rating(my_data.rating, DRAW);
 		//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.lose_rating);
 
-
-
-
-
 		//общие параметры
 		common.activate();
-
 
 		//запоминаем оппонента
 		opponent=this;
@@ -4396,7 +4312,7 @@ bot_game={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
-				sys_msg.add('Соперник потреяли город '+empty_city?.rus_name)
+				sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У соперника нет одиноких городов')	
 			}
@@ -4447,7 +4363,6 @@ common={
 			objects.roll_dice_btn.visible=false
 			objects.end_turn_btn.visible=false
 		}
-
 
 		this.place_chip(objects.white_chip,0)
 		this.place_chip(objects.yellow_chip,0)
@@ -4604,7 +4519,10 @@ common={
 			cell_spr.city_name.tint=0x9F6C04			
 			cell_spr.level_icon.tint=0xC00000
 		}
-		if (cell.owner===0)	cell_spr.bcg.texture=assets.cell_bcg
+		if (cell.owner===0){
+			cell_spr.bcg.texture=assets.cell_bcg
+			cell_spr.city_name.tint=0xffffff
+		}	
 
 		if (cell.type==='city'){
 
@@ -4693,7 +4611,7 @@ common={
 
 			const tar_cell=objects.cells[next_cell_id]
 
-			const shift=next_cell_id===opp_chip.cell_id?60:42
+			const shift=next_cell_id===opp_chip.cell_id?50:38
 
 			const tx=tar_cell.x+chip_anchors[next_cell_id].dx*shift
 			const ty=tar_cell.y+chip_anchors[next_cell_id].dy*shift
@@ -4951,7 +4869,7 @@ common={
 
 	place_chip(chip, cell_id){
 
-		const shift=chip===objects.yellow_chip?60:42
+		const shift=chip===objects.yellow_chip?50:38
 
 		chip.cell_id=cell_id
 		chip.x=objects.cells[cell_id].x+chip_anchors[cell_id].dx*shift
