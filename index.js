@@ -3742,7 +3742,7 @@ plans={
 				const empty_cities=common.get_empty_cities(2)
 				if(empty_cities.length){
 					sys_msg.add('Вы достигли цели ЗАХВАТ')
-					const city_cell=empty_cities[irnd[0,empty_cities.length-1]]
+					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
 					common.capture_empty_city(city_cell)
 					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
