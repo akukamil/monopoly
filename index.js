@@ -2794,6 +2794,8 @@ dice={
 		//останавливаем
 		//clearInterval(this.click_timer)
 		//this.click_timer=0
+		
+		sound.play('click')
 
 		//objects.dice_hand.visible=false
 		this.roll_and_go(objects.white_chip);
@@ -2835,6 +2837,9 @@ fin={
 			sys_msg.add('Восстановите положительный баланс!')
 			return
 		}
+
+
+		sound.play('click')
 
 		//останавливаем
 		//objects.fin_hand.visible=false
@@ -3150,6 +3155,7 @@ auc={
 
 		//соперник предложил ставку
 		if (data.type==='auc_bid'){
+			sound.play('auc_bid')
 			objects.auc_decline_btn.alpha=1
 			objects.auc_make_bid_btn.alpha=1
 			this.started=1
@@ -3196,6 +3202,7 @@ auc={
 			return
 		}
 
+		sound.play('auc_change')
 
 		if (this.state!=='on_my_bid'){
 			anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
@@ -3304,6 +3311,8 @@ auc={
 				return
 			}
 
+
+			sound.play('auc_bid')
 			this.state='on_opp_bid'
 			objects.auc_decline_btn.alpha=0.5
 			objects.auc_make_bid_btn.alpha=0.5
@@ -4637,7 +4646,9 @@ common={
 			if (cell.type==='city'){
 				this.change_money(cur_player,-cell.rent[cell.level])
 				this.change_money(opp_player,+cell.rent[cell.level])
-
+				
+				sound.play('rent')
+				
 				if(cell.owner===1)
 					sys_msg.add(`Получите ренту: ${cell.rent[cell.level]}$`)
 				else
@@ -4889,6 +4900,8 @@ common={
 			cell.owner=player
 			this.change_money(player,-price)
 
+
+			sound.play('buy')
 			cell.level++
 			
 			this.casino_buy_bonus=0
@@ -4933,6 +4946,8 @@ common={
 				sys_msg.add('Соперник продал '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 			else
 				sys_msg.add('Вы продали '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+
+			sound.play('sell')
 
 			//продан отель, получаем дома из банка
 			if (cell.level===6) {
@@ -6485,13 +6500,13 @@ main_loader={
 		this.t_progress=new PIXI.BitmapText('', {fontName: 'mfont32',fontSize: 18,align: 'center'});
 		this.t_progress.y=225;
 		this.t_progress.x=600;
-		this.t_progress.tint=0xFFC000;
+		this.t_progress.tint=0xffffff;
 		this.t_progress.anchor.set(1,0);
 
 		this.t_info=new PIXI.BitmapText(['Загрузка...','Loading...'][LANG], {fontName: 'mfont32',fontSize: 20,align: 'center'});
 		this.t_info.y=195;
 		this.t_info.x=395;
-		this.t_info.tint=0xFFC000;
+		this.t_info.tint=0xffffff;
 		this.t_info.anchor.set(0.5,0.5);
 
 		objects.load_cont=new PIXI.Container();
@@ -6531,7 +6546,13 @@ main_loader={
 		//добавляем библиотеку аватаров
 		loader.add('multiavatar', 'https://akukamil.github.io/common/multiavatar.min.txt');
 
-		loader.add('music',git_src+'sounds/music.mp3');
+		loader.add('sell',git_src+'sounds/sell.mp3');
+		loader.add('buy',git_src+'sounds/buy.mp3');
+		loader.add('rent',git_src+'sounds/rent.mp3');
+		loader.add('click',git_src+'sounds/click.mp3');
+		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3');
+		loader.add('auc_change',git_src+'sounds/auc_change.mp3');
+
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
