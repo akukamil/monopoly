@@ -3750,8 +3750,9 @@ plans={
 				//захват одинокого города
 				const empty_cities=common.get_empty_cities(2)
 				if(empty_cities.length){
-					sys_msg.add('Вы достигли цели ЗАХВАТ')
+					
 					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
+					sys_msg.add('Вы достигли цели и захватили город '+city_cell.rus_name)
 					common.capture_empty_city(city_cell)
 					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
@@ -4790,13 +4791,17 @@ common={
 
 		if (data.id===0){
 
-			const my_cities=cells_data.filter(d=>{return d.owner===1&&d.level===1})
+			/*const my_cities=cells_data.filter(d=>{return d.owner===1&&d.level===1})
 			my_cities.forEach(c=>{
 				c.owner=0
 				c.level=0
 				common.update_view(c)
-			})
-			sys_msg.add('Соперник реализовал план Война')
+			})*/
+			
+			const city_cell=cells_data[data.city_id]
+			const city_name=city_cell.rus_name
+			common.capture_empty_city(city_cell)
+			sys_msg.add('Соперник реализовал план и захватил Ваш город ('+city_name+')')
 		}
 
 		if (data.id===1){
