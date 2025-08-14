@@ -4849,6 +4849,9 @@ common={
 		city_cell.level=0
 		this.update_view(city_cell)
 		
+		//анимация
+		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
+		
 	},
 	
 	capture_empty_city(city_cell){
@@ -4857,6 +4860,8 @@ common={
 		city_cell.owner=3-city_cell.owner
 		this.update_view(city_cell)
 		
+		//анимация
+		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
 	},
 
 	change_money(player,amount){
