@@ -3346,9 +3346,11 @@ casino={
 	bid:0,
 	roll_on:0,
 	state:'',
+	roll_sound_timer:0,
 
 	activate(){
 
+		sound.play('casino')
 		this.state='ready'
 		this.bid=Math.min(100,my_data.money)
 		//objects.casino_bid.text=this.bid+' $'
@@ -3381,6 +3383,8 @@ casino={
 
 	stop(){
 
+
+		clearInterval(this.roll_sound_timer)
 		const result=irnd(0,4)
 		objects.casino_icon.tilePosition.y=-90*result
 		let city_id=0
@@ -3467,7 +3471,12 @@ casino={
 		opponent.send({sender:my_data.uid,type:'casino_accept',tm:Date.now()})
 
 		this.state='roll'
-
+		
+		this.roll_sound_timer=setInterval(()=>{
+			if(!assets.casino_roll.isPlaying)
+				sound.play('casino_roll')
+		},100)
+		
 		objects.casino_icon.tilePosition.y=0
 
 		some_process.casino_roll=function(){casino.roll_process(objects.casino_icon)}
@@ -6609,6 +6618,8 @@ main_loader={
 		loader.add('plans_click',git_src+'sounds/plans_click.mp3');
 		loader.add('city_dlg',git_src+'sounds/city_dlg.mp3');
 		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3');
+		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3');
+		loader.add('casino',git_src+'sounds/casino.mp3');
 
 
 
