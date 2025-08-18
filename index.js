@@ -2740,6 +2740,8 @@ dice={
 		this.rnd1=irnd(1,6)
 		this.rnd2=irnd(1,6)
 		
+		sound.play('dice')
+		
 		const player=objects.white_chip===chip?1:2
 
 		if (roll_res){
@@ -2896,7 +2898,7 @@ city_dlg={
 	},
 
 	close_btn_down(){
-
+		sound.play('click')
 		objects.cell_info_cont.visible=false
 	},
 
@@ -3043,6 +3045,7 @@ city_dlg={
 
 		objects.cell_info_cont.visible=true
 		this.update(cell)
+		sound.play('city_dlg')
 
 
 	},
@@ -3109,6 +3112,7 @@ city_dlg={
 
 	close(){
 
+		
 		objects.cell_info_cont.visible=false
 
 	},
@@ -3136,6 +3140,8 @@ auc={
 		this.cur_cell=cell
 		objects.auc_bid.text=this.cur_bid+'$'
 		objects.auc_asset_name.text=cell.rus_name
+		
+		sound.play('auc')
 
 		if (this.state==='on_my_bid'){
 			objects.auc_decline_btn.alpha=1
@@ -3364,6 +3370,7 @@ casino={
 
 	close(){
 
+		sound.play('click')
 		objects.casino_cont.visible=false
 
 	},
@@ -3383,6 +3390,7 @@ casino={
 			common.change_money(1,300)
 		}
 		if (result===1){
+			sound.play('casino_m_300')
 			sys_msg.add('Вы проиграли 300 $')
 			common.change_money(1,-300)
 		}
@@ -3392,6 +3400,7 @@ casino={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
+				sound.play('city_lost')
 				sys_msg.add('Вы потреяли город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У вас нет одиноких городов')	
@@ -3411,6 +3420,7 @@ casino={
 		}
 		if (result===4){
 			sys_msg.add('Вы можете купить любой город!')
+			sound.play('can_buy_any_city')
 			common.casino_buy_bonus=1
 		}
 	
@@ -3702,11 +3712,13 @@ plans={
 		this.action_made=0
 		objects.plans_cont.visible=true
 		this.update()
+		sound.play('plans_popup')
 
 	},
 
 	close_btn_down(){
 
+		sound.play('click')
 		objects.plans_cont.visible=false
 
 	},
@@ -3773,12 +3785,15 @@ plans={
 				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
+
+			sound.play('achivement')
 			this.plans_progress[i]=0
 			this.update()
 			this.action_made=1
 			return
 		}
 
+		sound.play('plans_click')
 		this.action_made=1
 
 		this.plans_progress[i]+=25
@@ -4088,7 +4103,7 @@ bot_game={
 
 	send(data){
 
-		console.log(data)
+		//console.log(data)
 		if (data.type==='auc_dec'){
 			if (my_turn){
 
@@ -4268,7 +4283,7 @@ bot_game={
 			scheduler.add(()=>{common.opp_fin_move_event()},2000)
 		}
 
-		//казино, пока не играем
+		//казино
 		if (cell.type==='casino'){
 			
 			this.play_casino()
@@ -4286,10 +4301,11 @@ bot_game={
 					const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 					common.capture_empty_city(empty_city)
 					this.plans_progress[0]=0
+					sound.play('achivement')
 					sys_msg.add('Соперника реализовал план Захват ('+empty_city.rus_name+')')
 				}else{
 					
-					sys_msg.add('Соперника не может реализовать план Захват!')
+					sys_msg.add('Соперника не смог реализовать план Захват!')
 				}
 			}else{
 				this.plans_progress[0]+=25
@@ -4322,6 +4338,7 @@ bot_game={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
+				sound.play('city_lost')
 				sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У соперника нет одиноких городов')	
@@ -4363,6 +4380,7 @@ common={
 
 	houses_num:30,
 	casino_buy_bonus:0,
+	chip_sound_timer:0,
 
 	activate(){
 
@@ -4589,6 +4607,12 @@ common={
 	},
 
 	async move_chip(chip, steps){
+		
+		
+		this.chip_sound_timer=setInterval(()=>{
+			if(!assets.chip_go.isPlaying)
+				sound.play('chip_go')
+		},100)
 
 		let cur_cell_id=chip.cell_id
 
@@ -4640,6 +4664,7 @@ common={
 		const cur_player=chip===objects.white_chip?1:2
 		const opp_player=3-cur_player
 
+		clearInterval(this.chip_sound_timer)
 
 		//расчет ренты за участок соперника
 		if (cell.owner===opp_player){
@@ -4661,8 +4686,6 @@ common={
 		//можно покупать и продавать что захочешь
 		if (cur_player===1)
 			my_turn_started=1
-
-
 
 		//мой город
 		if (cell.owner===cur_player){
@@ -4823,7 +4846,9 @@ common={
 
 	opp_fin_move_event(){
 
-		objects.roll_dice_btn.visible=true
+		sound.play('roll_btn')
+		anim3.add(objects.roll_dice_btn,{scale_xy:[0.6666, 0.9,'ease2back']}, true, 0.25);
+		objects.roll_dice_btn.tint=objects.roll_dice_btn.base_tint
 		my_turn=1
 	},
 	
@@ -4857,6 +4882,7 @@ common={
 	capture_empty_city(city_cell){
 		
 		//меняем владельца горда
+		sound.play('capture_city')
 		city_cell.owner=3-city_cell.owner
 		this.update_view(city_cell)
 		
@@ -4866,6 +4892,7 @@ common={
 
 	change_money(player,amount){
 
+		sound.play('money')
 		if (player===1){
 			my_data.money+=amount
 			objects.my_card_money.text=my_data.money+'$'
@@ -4905,20 +4932,23 @@ common={
 
 		if (cell.type==='city'){
 
-
 			const price=prc||(cell.level>0?cell.house_cost:cell.price)
 			cell.owner=player
 			this.change_money(player,-price)
-
-
-			sound.play('buy')
+			
 			cell.level++
 			
 			this.casino_buy_bonus=0
 			
 			//анимация
 			anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
-
+			
+			//проверяем монополию для звука
+			const country=cells_data.filter(c=>c.country===cell.country)
+			const is_monopoly=country.every(c=>{return c.level===1&&c.owner===cell.owner})
+			if (is_monopoly) sound.play('monopoly')
+			
+		
 			//куплен дом
 			if (cell.level>1&&cell.level<6){
 				this.houses_num--
@@ -4929,6 +4959,9 @@ common={
 			if (cell.level===6){
 				this.houses_num+=4
 				objects.houses_info.text='Домов в банке: '+this.houses_num
+				sound.play('hotel_buy')
+			}else{
+				sound.play('buy')
 			}
 
 			//обновляем всю страну так как там тоже могло поменяться
@@ -6562,6 +6595,21 @@ main_loader={
 		loader.add('click',git_src+'sounds/click.mp3');
 		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3');
 		loader.add('auc_change',git_src+'sounds/auc_change.mp3');
+		loader.add('achivement',git_src+'sounds/achivement.mp3');
+		loader.add('can_buy_any_city',git_src+'sounds/can_buy_any_city.mp3');
+		loader.add('casino_m_300',git_src+'sounds/casino_m_300.mp3');
+		loader.add('money',git_src+'sounds/money.mp3');
+		loader.add('capture_city',git_src+'sounds/capture_city.mp3');
+		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3');
+		loader.add('dice',git_src+'sounds/dice.mp3');
+		loader.add('chip_go',git_src+'sounds/chip_go.mp3');
+		loader.add('monopoly',git_src+'sounds/monopoly.mp3');
+		loader.add('auc',git_src+'sounds/auc.mp3');
+		loader.add('plans_popup',git_src+'sounds/plans_popup.mp3');
+		loader.add('plans_click',git_src+'sounds/plans_click.mp3');
+		loader.add('city_dlg',git_src+'sounds/city_dlg.mp3');
+		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3');
+
 
 
 		//прогресс
