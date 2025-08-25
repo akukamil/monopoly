@@ -818,8 +818,14 @@ class cell_class extends PIXI.Container{
 		this.price.anchor.set(0.5,0.5);
 		this.price.y=16;
 		this.price.tint=0xFBE5FF;
-
-		this.addChild(this.bcg,this.auc_icon,this.level_icon,this.icon,this.city_name,this.price)
+		
+		this.hl=new PIXI.Sprite(assets.cell_hl_img)
+		this.hl.anchor.set(0.5,0.5)
+		this.hl.width=90
+		this.hl.height=90
+		this.hl.visible=false
+		
+		this.addChild(this.bcg,this.auc_icon,this.level_icon,this.icon,this.city_name,this.price,this.hl)
 	}
 
 
@@ -5102,10 +5108,16 @@ common={
 			//анимация
 			anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
 			
-			//проверяем монополию для звука
+			//проверяем монополию для звука и подстветки всей монополии
 			const country=cells_data.filter(c=>c.country===cell.country)
 			const is_monopoly=country.every(c=>{return c.level===1&&c.owner===cell.owner})
-			if (is_monopoly) sound.play('monopoly')
+			if (is_monopoly) {
+				sound.play('monopoly')
+				for (let city of country){
+					const cell_spr=objects.cells[city.id]
+					anim3.add(cell_spr.hl,{alpha:[0, 1,'ease2back']}, true, 2);
+				}				
+			}
 			
 		
 			//куплен дом
