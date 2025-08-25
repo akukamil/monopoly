@@ -4331,7 +4331,7 @@ bot_game={
 			scheduler.add(()=>{common.sell(2,cell_to_sell)},1000)
 			scheduler.add(()=>{this.try_sell_some()},2000)
 		}else{
-			this.stop('opp_lose')
+			this.stop('my_win')
 		}
 
 	},
@@ -4530,6 +4530,7 @@ common={
 
 		if (my_turn){
 			objects.roll_dice_btn.visible=true
+			objects.roll_dice_btn.scale_xy=0.666
 			objects.end_turn_btn.visible=false
 		}else{
 			objects.roll_dice_btn.visible=false
@@ -5044,15 +5045,27 @@ common={
 		
 	},
 	
-	capture_empty_city(city_cell){
+	capture_empty_city(cell){
 		
 		//меняем владельца горда
 		sound.play('capture_city')
-		city_cell.owner=3-city_cell.owner
-		this.update_view(city_cell)
+		cell.owner=3-cell.owner
+		this.update_view(cell)
+		
+		
+		//проверяем монополию для звука и подстветки всей монополии
+		const country=cells_data.filter(c=>c.country===cell.country)
+		const is_monopoly=country.every(c=>{return c.level===1&&c.owner===cell.owner})
+		if (is_monopoly) {
+			sound.play('monopoly')
+			for (let city of country){
+				const cell_spr=objects.cells[city.id]
+				anim3.add(cell_spr.hl,{alpha:[0, 1,'ease2back']}, true, 2);
+			}
+		}
 		
 		//анимация
-		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
+		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
 	},
 
 	change_money(player,amount){
