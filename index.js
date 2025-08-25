@@ -686,14 +686,14 @@ class player_mini_card_class extends PIXI.Container {
 		this.avatar_frame.width=this.avatar_frame.height=81.48;
 
 		this.name="";
-		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont32',fontSize: 22,align: 'center'});
+		this.name_text=new PIXI.BitmapText('', {fontName: 'mfont64',fontSize: 22,align: 'center'});
 		this.name_text.anchor.set(1,0);
 		this.name_text.x=180;
 		this.name_text.y=20;
 		this.name_text.tint=0xffffff;
 
 		this.rating=0;
-		this.rating_text=new PIXI.BitmapText('', {fontName: 'mfont32',fontSize: 29,align: 'center'});
+		this.rating_text=new PIXI.BitmapText('', {fontName: 'mfont64',fontSize: 29,align: 'center'});
 		this.rating_text.tint=0xffff00;
 		this.rating_text.anchor.set(1,0.5);
 		this.rating_text.x=185;
@@ -1333,7 +1333,7 @@ process_new_message = function(msg) {
 	//айди клиента для удаления дубликатов
 	if (msg.message==='CLIEND_ID')
 		if (msg.client_id !== client_id)
-			kill_game();
+			kill_game()
 
 
 	//получение сообщение в состояни игры
@@ -1347,7 +1347,6 @@ process_new_message = function(msg) {
 				confirm_dialog.opponent_confirm_play(0);
 
 			//получение согласия на игру
-
 			if (msg.message==='CONF')
 				confirm_dialog.opponent_confirm_play(1);
 
@@ -2228,7 +2227,7 @@ pref={
 		//this.set_stick_perc_level(this.stick_perc);
 		//objects.pref_t_bonuses.text=this.bonuses+'%';
 
-		objects.bcg.texture=assets.lobby_bcg_img;
+		//objects.bcg.texture=assets.lobby_bcg_img;
 		anim3.add(objects.bcg,{alpha:[0,1,'linear']}, true, 0.5);
 
 		//заполняем имя и аватар
@@ -2804,60 +2803,87 @@ dice={
 		//отправляем сопернику
 		fbs.ref('inbox/'+opp_data.uid).set({message:'MOVE',sender:my_data.uid,type:'roll',roll_res:this.roll_res,tm:Date.now()})
 
-		objects.roll_dice_btn.visible=false
+		anim3.add(objects.roll_dice_btn,{scale_xy:[0.666,0.2,'easeInBack'],alpha:[1,0,'linear']}, false, 0.15);
+
 	}
 
 
 }
 
-fin={
+big_msg = {
 
-	click_timer:0,
+	p_resolve : 0,
 
-	activate(){
+	show(params) {
 
-		if (this.click_timer) return
+		objects.big_msg_t1.text=params.t1||''
+		objects.big_msg_t2.text=params.t2||''
+		objects.big_msg_t3.text=params.t3||''
 
-		objects.fin_hand.visible=true
+		objects.big_msg_fb_btn.visible = (!my_data.blocked)&&params.fb&&my_data.games>=200
 
-		this.click_timer=setInterval(()=>{
+		anim3.add(objects.big_msg_cont,{y:[-180,objects.big_msg_cont.sy,'easeOutBack']}, true, 0.6);
 
-			if (objects.fin_hand.texture===assets.hand0)
-				objects.fin_hand.texture=assets.hand1
-			else
-				objects.fin_hand.texture=assets.hand0
+		this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
+		this.show_bonus_anim(objects.big_msg_crystals,params.crystals||0)
 
-		},400)
-
+		return new Promise(function(resolve, reject){
+			big_msg.p_resolve = resolve;
+		});
 	},
 
-	pointerdown(){
+	show_bonus_anim(text_obj,tar_val){
 
-		//if (!this.click_timer) return
-
-		if (my_data.money<=0){
-			sys_msg.add('Восстановите положительный баланс!')
+		if (tar_val===0){
+			text_obj.text=0
 			return
 		}
 
+		const interval_time=(tar_val*52+948)/tar_val
 
-		sound.play('click')
+		let lights=0
+		const t=setInterval(()=>{
+			lights++
+			text_obj.text='+'+lights
+			if (lights===tar_val)
+				clearInterval(t)
+		},interval_time)
 
-		//останавливаем
-		//objects.fin_hand.visible=false
-		//clearInterval(this.click_timer)
-		//this.click_timer=0
+	},
 
-		//отправляем сопернику
-		opponent.send({message:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
+	async feedback_down() {
 
+		if (anim2.any_on()){
+			sound.play('locked');
+			return;
+		}
 
-		//теперь уже не мой ход
-		my_turn_started=0
-		my_turn=0
+		sound.play('click');
 
-		objects.roll_dice_btn.visible=false
-		objects.end_turn_btn.visible=false
+		anim3.add(objects.big_msg_cont,{y:[objects.big_msg_cont.sy,450,'easeInBack']}, false, 0.4);
+
+		//пишем отзыв и отправляем его
+		const msg = await keyboard.read();
+		if (msg) {
+			let fb_id = irnd(0,50);
+			await fbs.ref('fb/'+opp_data.uid+'/'+fb_id).set([msg, firebase.database.ServerValue.TIMESTAMP, my_data.name]);
+		}
+
+		this.p_resolve('close');
+
+	},
+
+	close() {
+
+		if (anim3.any_on()){
+			sound.play('locked');
+			return;
+		}
+
+		sound.play('click');
+
+		anim3.add(objects.big_msg_cont,{y:[objects.big_msg_cont.sy,450,'easeInBack']}, false, 0.4);
+		this.p_resolve("close");
 	}
 
 }
@@ -3043,7 +3069,7 @@ city_dlg={
 		//objects.cell_info_params.y=90
 		//objects.cell_info_prices.y=90
 
-		objects.cell_info_cont.visible=true
+		anim3.add(objects.cell_info_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2);
 		this.update(cell)
 		sound.play('city_dlg')
 
@@ -3120,6 +3146,59 @@ city_dlg={
 
 }
 
+fin={
+
+	click_timer:0,
+
+	activate(){
+
+		if (this.click_timer) return
+
+		objects.fin_hand.visible=true
+
+		this.click_timer=setInterval(()=>{
+
+			if (objects.fin_hand.texture===assets.hand0)
+				objects.fin_hand.texture=assets.hand1
+			else
+				objects.fin_hand.texture=assets.hand0
+
+		},400)
+
+	},
+
+	pointerdown(){
+
+		//if (!this.click_timer) return
+
+		if (my_data.money<=0){
+			sys_msg.add('Восстановите положительный баланс!')
+			return
+		}
+
+
+		sound.play('click')
+
+		//останавливаем
+		//objects.fin_hand.visible=false
+		//clearInterval(this.click_timer)
+		//this.click_timer=0
+
+		//отправляем сопернику
+		opponent.send({message:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
+
+
+		//теперь уже не мой ход
+		my_turn_started=0
+		my_turn=0
+
+		objects.roll_dice_btn.visible=false
+		
+		anim3.add(objects.end_turn_btn,{scale_xy:[0.666,0.2,'easeInBack'],alpha:[1,0,'linear']}, false, 0.15);
+	}
+
+}
+
 auc={
 
 	cur_bid:0,
@@ -3133,7 +3212,7 @@ auc={
 		this.state=state
 		this.started=0
 
-		objects.auc_cont.visible=true
+		anim3.add(objects.auc_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
 		objects.auc_make_bid_btn.texture=assets.auc_make_bid_btn
 
 		this.new_bid=this.cur_bid=cell.price
@@ -3153,7 +3232,6 @@ auc={
 			objects.auc_make_bid_btn.alpha=0.5
 			objects.auc_info.text='Ждем ставку соперника...'
 		}
-
 
 	},
 
@@ -3181,6 +3259,7 @@ auc={
 
 		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
 		if(data.type==='auc_dec'){
+			sound.play('decline')
 			objects.auc_decline_btn.alpha=1
 			objects.auc_make_bid_btn.alpha=1
 			objects.auc_make_bid_btn.texture=assets.auc_buy_btn_img
@@ -3190,6 +3269,7 @@ auc={
 
 		//соперник тоже отказался покупать
 		if(data.type==='auc_dec2'){
+			sound.play('decline')
 			objects.auc_cont.visible=false
 			sys_msg.add('Соперник тоже отказался покупать!')
 		}
@@ -3268,6 +3348,7 @@ auc={
 
 		//отказываемся когда соперник сразу отказался от аукциона
 		if(this.state==='on_auc_dec'){
+			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_dec2',tm:Date.now()})
 			sys_msg.add('Вы тоже отказались от покупки!')
 			objects.auc_cont.visible=false
@@ -3275,6 +3356,7 @@ auc={
 
 		//отменяю сразу аукцион, соперник может купить или нет
 		if (!this.started){
+			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_dec',tm:Date.now()})
 			objects.auc_info.text='Вы отказались от аукциона. Ждем решения соперника...'
 			this.state='on_my_dec'
@@ -3283,6 +3365,7 @@ auc={
 
 		//отказываюсь, пусть соперник берет по своей цене
 		if (this.started){
+			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
 			common.buy(2,this.cur_cell,this.cur_bid)
 			sys_msg.add('Вы проиграли аукцион. Соперник купил!')
@@ -3354,6 +3437,8 @@ casino={
 		this.state='ready'
 		this.bid=Math.min(100,my_data.money)
 		//objects.casino_bid.text=this.bid+' $'
+		
+		anim3.add(objects.casino_cont,{alpha:[0, 1,'linear'],scale_xy:[0.8,1,'linear']}, true, 0.2);
 		objects.casino_cont.visible=true
 
 		objects.casino_btn1.x=40
@@ -3719,6 +3804,7 @@ plans={
 	activate(){
 
 		this.action_made=0
+		anim3.add(objects.plans_cont,{alpha:[0, 1,'linear'],scale_xy:[0.8,1,'linear']}, true, 0.2);
 		objects.plans_cont.visible=true
 		this.update()
 		sound.play('plans_popup')
@@ -3728,7 +3814,7 @@ plans={
 	close_btn_down(){
 
 		sound.play('click')
-		objects.plans_cont.visible=false
+		anim3.add(objects.plans_cont,{alpha:[1, 0,'linear'],scale_xy:[1,0.5,'linear']}, false, 0.2);
 
 	},
 
@@ -3870,7 +3956,7 @@ online_game={
 
 
 		//показываем кнопки
-		//objects.game_buttons.visible=true;
+		objects.exch_btn.visible=true
 
 		//включаем/перезапускаем таймер
 		//timer.start(1);
@@ -4048,6 +4134,14 @@ bot_game={
 		opp_data.uid='bot'
 		opponent=this
 		my_turn=1
+		
+		opponent=this
+		
+		objects.stop_bot_btn.visible=true
+		objects.exch_btn.visible=false
+		
+		this.plans_progress=[0,0,0]
+		
 
 		for (let i=0;i<24;i++){
 
@@ -4231,9 +4325,44 @@ bot_game={
 			scheduler.add(()=>{common.sell(2,cell_to_sell)},1000)
 			scheduler.add(()=>{this.try_sell_some()},2000)
 		}else{
-			alert('нечем заплатить боту')
+			this.stop('opp_lose')
 		}
 
+	},
+	
+	async stop(res){
+	
+		this.on=0;
+
+		const res_array = [
+			['both_finished',DRAW, ['Ничья','Draw']],
+			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
+			['my_win',WIN , ['Вы выиграли!','You win!']],
+			['opp_win',WIN , ['Вы проиграли!','You lose!']],
+			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
+			['both_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
+			['my_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
+			['my_more_fin_after_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
+			['opp_more_fin_after_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
+			['same_fin_after_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
+			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
+		];
+
+		let result_number = res_array.find( p => p[0] === res)[1];
+		let result_info = res_array.find( p => p[0] === res)[2][LANG];
+
+		//выключаем элементы
+		objects.stop_bot_btn.visible=false
+		
+
+		//воспроизводим звук
+		if (result_number === DRAW || result_number === LOSE)
+			sound.play('lose');
+		else
+			sound.play('win');
+
+		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
+		
 	},
 
 	process_move(cell){
@@ -4348,7 +4477,7 @@ bot_game={
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
 				sound.play('city_lost')
-				sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
+				sys_msg.add('Соперник потерял город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У соперника нет одиноких городов')	
 			}
@@ -4443,6 +4572,7 @@ common={
 				cell_obj.bcg.texture=assets.cell_bcg
 				cell_obj.bcg.width=74
 				cell_obj.bcg.height=74
+				cell_obj.city_name.tint=0xffffff
 			}
 
 
@@ -4454,6 +4584,11 @@ common={
 				cell_obj.pointerdown=function(){common.cell_down(i)}
 				cell_obj.auc_icon.visible=cell.auc?true:false
 				cell_obj.city_name.text=cell.rus_name
+				cell.owner=0
+				cell.level=0
+				cell_obj.level_icon.texture=null
+				cell_obj.price.visible=true
+				cell_obj.auc_icon.visible=cell.auc?true:false
 			}
 
 			if (cell.type==='casino'){
@@ -4742,7 +4877,7 @@ common={
 		//завершение хода
 		if (cur_player===1){
 			objects.roll_dice_btn.visible=false
-			objects.end_turn_btn.visible=true
+			anim3.add(objects.end_turn_btn,{scale_xy:[0.3,0.666,'easeOutBack'],alpha:[0,1,'linear']}, true, 0.15);
 		}
 
 
@@ -4788,16 +4923,31 @@ common={
 				common.change_money(2,-300)
 			}
 			if (move_data.result===2){
-				const empty_city=cells_data[move_data.city_id]
-				common.remove_empty_city(empty_city)
-				sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
+				if (move_data.city_id){
+					const empty_city=cells_data[move_data.city_id]
+					common.remove_empty_city(empty_city)				
+					sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
+					
+				}else{
+					sys_msg.add('Соперник чуть не потерял город')
+				}
+
 			}
 			if (move_data.result===3){
-				const empty_city=cells_data[move_data.city_id]
-				common.capture_empty_city(empty_city)
-				sys_msg.add('Соперник захватил город '+empty_city?.rus_name)
-			}
+				if (move_data.city_id){
+					const empty_city=cells_data[move_data.city_id]
+					common.capture_empty_city(empty_city)
+					sys_msg.add('Соперник захватил Ваш город '+empty_city?.rus_name)					
+					
+				}else{
+					sys_msg.add('Соперник чуть не захватил Ваш город')
+				}
 
+			}
+			
+			if (move_data.result===4){
+				sys_msg.add('Соперник может купить любой город')
+			}
 		}
 
 		if (move_data.type==='exch'){
@@ -4856,7 +5006,7 @@ common={
 	opp_fin_move_event(){
 
 		sound.play('roll_btn')
-		anim3.add(objects.roll_dice_btn,{scale_xy:[0.6666, 0.9,'ease2back']}, true, 0.25);
+		anim3.add(objects.roll_dice_btn,{scale_xy:[0.3, 0.666,'easeOutBack']}, true, 0.25);
 		objects.roll_dice_btn.tint=objects.roll_dice_btn.base_tint
 		my_turn=1
 	},
@@ -4884,7 +5034,7 @@ common={
 		this.update_view(city_cell)
 		
 		//анимация
-		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
+		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
 		
 	},
 	
@@ -5029,7 +5179,20 @@ common={
 			this.update_view(cell)
 
 		}
+	},
+	
+	async stop(res){
+		
+		await opponent.stop(res)
+		
+		objects.opp_card_cont.visible=false
+		objects.my_card_cont.visible=false
+		objects.cells_cont.visible=false
+		lobby.activate()
+		
 	}
+
+
 }
 
 vk={
@@ -5065,24 +5228,21 @@ main_menu={
 		objects.main_menu_cont.visible=true;
 
 
-		objects.bcg.texture=assets.main_bcg_img;
+		objects.bcg.texture=assets.main_bcg;
 		anim3.add(objects.bcg,{alpha:[0,1,'linear']}, true, 0.5);
 
-		anim3.add(objects.title_cont,{alpha:[0,1,'linear']}, true, 0.5);
+		anim3.add(objects.main_menu_cont,{alpha:[0,1,'linear']}, true, 0.5);
 
-		anim3.add(objects.bcg,{alpha:[0,1,'linear']}, true, 0.2);
-
-		anim3.add(objects.title_eko,{x:[-100,objects.title_eko.sx,'easeOutBack']}, true, 0.5);
 		anim3.add(objects.title_online,{x:[850,objects.title_online.sx,'easeOutBack']}, true, 0.5);
-
 
 
 
 		if (game_platform==='VK')
 			anim3.add(objects.vk_buttons_cont,{alpha:[0,1,'linear']}, true, 0.5);
 
-
-		//some_process.main_menu=this.process;
+		some_process.main_menu=this.process;
+		
+		
 		//кнопки
 		await anim3.add(objects.main_btn_cont,{x:[800,objects.main_btn_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.75);
 
@@ -5093,22 +5253,14 @@ main_menu={
 		objects.main_title_blique.x+=20;
 		if (objects.main_title_blique.x>2000)
 			objects.main_title_blique.x=0;
-
-		objects.title_rack.rotation=Math.sin(game_tick*0.04)*2;
-		objects.title_stick.rotation=-0.256+Math.sin(game_tick*0.6)*0.1;
-
-		const balls=[objects.anim_ball_1,objects.anim_ball_2];
-			for (const ball of balls){
-			if (ball.spd!=0){
-				ball.x+=ball.spd;
-				ball.rotation+=ball.spd/39.5;
-				ball.spd*=0.98;
-				if (ball.spd>0&&ball.spd<0.02)
-					ball.spd=0;
-				if (ball.spd<0&&ball.spd>-0.02)
-					ball.spd=0;
-			}
+		
+		if (Math.random()>0.96){
+			const dir=irnd(-5,5)
+			objects.uncle_head.x+=dir
+			objects.uncle_hands.x+=dir+irnd(-2,2)
+			objects.uncle_head.angle=irnd(-3,3)
 		}
+
 
 	},
 
@@ -5142,9 +5294,8 @@ main_menu={
 		anim3.add(objects.main_btn_cont,{x:[objects.main_btn_cont.x,-800,'linear']}, false, 0.5);
 
 		//кнопки
-		anim3.add(objects.title_cont,{alpha:[1,0,'linear']}, false, 0.5);
+		anim3.add(objects.main_menu_cont,{alpha:[1,0,'linear']}, false, 0.5);
 
-		objects.main_menu_cont.visible=false;
 		some_process.main_menu=function(){};
 
 		//vk
@@ -5164,10 +5315,7 @@ main_menu={
 
 		await this.close()
 
-		players_cache.players.bot={};
-		players_cache.players.bot.name=['Бот','Bot'][LANG];
-		players_cache.players.bot.rating=1400;
-		players_cache.players.bot.texture=assets.pc_icon;
+
 
 		opp_data.uid='bot';
 		opp_data.name=['Бот','Bot'][LANG];
@@ -5298,7 +5446,7 @@ lobby={
 		this.add_card_ai();
 
 
-		objects.bcg.texture=assets.lobby_bcg_img;
+		//objects.bcg.texture=assets.lobby_bcg_img;
 		anim3.add(objects.bcg,{alpha:[0,1,'linear']}, true, 0.5);
 		anim3.add(objects.cards_cont,{alpha:[0, 1,'linear']}, true, 0.1);
 		anim3.add(objects.lobby_footer_cont,{y:[450, objects.lobby_footer_cont.sy,'linear']}, true, 0.1);
@@ -6106,7 +6254,7 @@ lobby={
 			opp_data.name=['Бот','Bot'][LANG];
 			opp_data.uid='bot';
 			opp_data.rating=1400;
-			game.activate(bot_game, 'master');
+			bot_game.activate()
 		} else {
 			sound.play('click');
 			objects.invite_button.texture=assets.invite_wait_img;
@@ -6322,7 +6470,7 @@ lb={
 
 	close() {
 
-		objects.bcg.texture=assets.bcg;
+		//objects.bcg.texture=assets.bcg;
 		objects.lb_1_cont.visible=false;
 		objects.lb_2_cont.visible=false;
 		objects.lb_3_cont.visible=false;
@@ -6620,8 +6768,7 @@ main_loader={
 		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3');
 		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3');
 		loader.add('casino',git_src+'sounds/casino.mp3');
-
-
+		loader.add('decline',git_src+'sounds/decline.mp3');
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
