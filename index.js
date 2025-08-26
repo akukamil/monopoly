@@ -3109,6 +3109,7 @@ city_dlg={
 
 		if (check_buy_res==='no_money'){
 			sys_msg.add('Недостаточно средств для покупки!')
+			sound.play('decline')
 			return
 		}
 
@@ -3455,13 +3456,15 @@ casino={
 		this.bid=Math.min(100,my_data.money)
 		//objects.casino_bid.text=this.bid+' $'
 		
-		anim3.add(objects.casino_cont,{alpha:[0, 1,'linear'],scale_xy:[0.8,1,'linear']}, true, 0.2);
+		anim3.add(objects.casino_cont,{alpha:[0, 1,'linear'],scale_xy:[0.8,1,'easeOutBack']}, true, 0.2);
 		objects.casino_cont.visible=true
 
 		objects.casino_btn1.x=40
+		objects.casino_btn1.alpha=1
 		objects.casino_btn1.visible=true
 
 		objects.casino_btn2.x=200
+		objects.casino_btn2.alpha=1
 		objects.casino_btn2.texture=assets.casino_btn2
 
 		objects.casino_icon.tilePosition.y=0
@@ -3475,7 +3478,8 @@ casino={
 	close(){
 
 		sound.play('click')
-		objects.casino_cont.visible=false
+		anim3.add(objects.casino_cont,{alpha:[1, 0,'linear'],scale_xy:[1,0.8,'easeInBack']}, false, 0.2);
+		//objects.casino_cont.visible=false
 
 	},
 
@@ -3508,7 +3512,7 @@ casino={
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
 				sound.play('city_lost')
-				sys_msg.add('Вы потреяли город '+empty_city?.rus_name)
+				sys_msg.add('Вы проиграли город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У вас нет одиноких городов')	
 			}
@@ -3540,6 +3544,7 @@ casino={
 		this.state='fin'
 		objects.casino_btn1.visible=false
 		objects.casino_btn2.x=120
+		objects.casino_btn2.alpha=1
 		objects.casino_btn2.texture=assets.casino_exit_btn_img
 
 	},
@@ -3548,7 +3553,6 @@ casino={
 
 
 		if (this.state==='roll'){
-			objects.casino_info.text='процесс уже запущен'
 			return
 		}
 
@@ -3571,7 +3575,6 @@ casino={
 		}
 
 		if (this.state==='roll'){
-			objects.casino_info.text='процесс уже запущен'
 			return
 		}
 
@@ -3587,7 +3590,10 @@ casino={
 		objects.casino_icon.tilePosition.y=0
 
 		some_process.casino_roll=function(){casino.roll_process(objects.casino_icon)}
-
+		
+		//затемняем кнопки
+		objects.casino_btn1.alpha=0.5
+		objects.casino_btn2.alpha=0.5
 
 		setTimeout(()=>{this.stop();some_process.casino_roll=()=>{}},2500)
 
@@ -6837,6 +6843,7 @@ main_loader={
 		loader.add('money',git_src+'sounds/money.mp3');
 		loader.add('capture_city',git_src+'sounds/capture_city.mp3');
 		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3');
+		loader.add('city_lost',git_src+'sounds/city_lost.mp3');
 		loader.add('dice',git_src+'sounds/dice.mp3');
 		loader.add('chip_go',git_src+'sounds/chip_go.mp3');
 		loader.add('monopoly',git_src+'sounds/monopoly.mp3');
