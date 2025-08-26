@@ -3885,7 +3885,7 @@ plans={
 					common.capture_empty_city(city_cell)
 					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
-					sys_msg.add('Данный план невозможно реализовать')
+					sys_msg.add('Данный план невозможно сейчас реализовать')
 					return
 				}
 			}
@@ -3918,6 +3918,8 @@ plans={
 
 		objects.plans_mask[i].width=this.plans_progress[i]
 		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
+		
+		opponent.send({sender:my_data.uid,type:'plan',id:-1,tm:Date.now()})
 
 		this.update()
 
@@ -5011,7 +5013,10 @@ common={
 		}
 
 		if (move_data.type==='plan'){
-			this.opp_activated_plan(move_data)
+			if (move_data.id===-1)
+				this.opp_activated_plan(move_data)
+			else
+				sys_msg.add('Соперник доработал план!')
 		}
 
 		if (move_data.type==='exch_decline'){
