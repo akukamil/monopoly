@@ -1410,25 +1410,37 @@ sys_msg={
 	promise_resolve :0,
 
 	async add(t){
+		
+		console.log(sys_msg.promise_resolve,t)
 
-		if (this.promise_resolve) this.promise_resolve('forced');
+		if (this.promise_resolve) {
+			console.log('this.promise_resolve("forced")')
+			this.promise_resolve('forced');
+		}
 
 		sound.play('popup');
 
 		//показываем сообщение
 		objects.sys_msg_text.text=t;
 		const ares=await anim3.add(objects.sys_msg_cont,{alpha:[0,1,'linear']}, true, 0.25,false);
-		if (ares==='killed') return;
+		if (ares===2) {
+			console.log('anim3 killed')
+			return;
+		}
 
 		//ждем
 		const res = await new Promise(resolve => {
 				sys_msg.promise_resolve = resolve;
 				setTimeout(resolve,5000)
 			}
-		);
+		)
+		sys_msg.promise_resolve=0
 
 		//это если насильно закрываем
-		if (res==='forced') return;
+		if (res==='forced'){
+			console.log('resolved forced!')
+			return;
+		} 
 
 		anim3.add(objects.sys_msg_cont,{alpha:[1,0,'linear']}, false, 0.25,false);
 
@@ -2898,7 +2910,6 @@ city_dlg={
 
 	cur_cell:0,
 
-
 	check_buy(){
 
 		//проверяем можно ли строить
@@ -3019,7 +3030,7 @@ city_dlg={
 		if (cell.owner===2){
 			this.place_buttons(1)
 			btn2.alpha=0.5
-			btn2_t.alpha=0.5
+			//btn2_t.alpha=0.5
 			btn2_t.text='Куплено!'
 			btn2.pointerdown=function(){}
 			return
@@ -3064,7 +3075,7 @@ city_dlg={
 		//проверяем можно ли купить и строить
 		if (btn2.visible&&this.check_buy()!=='ok'){
 			btn2.alpha=0.5
-			btn2_t.alpha=0.5
+			//btn2_t.alpha=0.5
 		}
 
 	},
@@ -3092,7 +3103,7 @@ city_dlg={
 		}
 
 		if (check_buy_res==='not_all_complete'){
-			sys_msg.add('Нужно строить последовательно!')
+			sys_msg.add('Нужно строить последо вательно!')
 			return
 		}
 
@@ -3260,7 +3271,7 @@ auc={
 		if(data.type==='auc_buy'){
 			common.buy(2,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
-			sys_msg.add('Соперник купил!!!')
+			sys_msg.add('Соперник купил город!!!')
 		}
 
 		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
@@ -3374,7 +3385,7 @@ auc={
 			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
 			common.buy(2,this.cur_cell,this.cur_bid)
-			sys_msg.add('Вы проиграли аукцион. Соперник купил!')
+			sys_msg.add('Вы проиграли аукцион. Город купил соперник!')
 			objects.auc_cont.visible=false
 		}
 
@@ -3476,11 +3487,12 @@ casino={
 
 
 		clearInterval(this.roll_sound_timer)
-		const result=irnd(0,4)
+		const result=irnd(0,5)
 		objects.casino_icon.tilePosition.y=-90*result
 		let city_id=0
 		
 		if (result===0){
+			sound.play('lost300')
 			sys_msg.add('Вы выиграли 300 $')
 			common.change_money(1,300)
 		}
@@ -3518,7 +3530,11 @@ casino={
 			sound.play('can_buy_any_city')
 			common.casino_buy_bonus=1
 		}
-	
+		if (result===5){
+			sys_msg.add('Вы не платите ренту 3 хода!')
+			sound.play('can_buy_any_city')
+			common.my_no_rent_bonus=3
+		}
 		opponent.send({sender:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
 
 		this.state='fin'
@@ -4331,7 +4347,7 @@ bot_game={
 			scheduler.add(()=>{common.sell(2,cell_to_sell)},1000)
 			scheduler.add(()=>{this.try_sell_some()},2000)
 		}else{
-			this.stop('my_win')
+			common.stop('my_win')
 		}
 
 	},
@@ -4465,7 +4481,7 @@ bot_game={
 		
 		common.process_opp_move({type:'casino_accept'})
 		
-		const result=irnd(0,4)
+		const result=irnd(0,5)
 		let city_id=0
 		
 		if (result===0){
@@ -4473,6 +4489,7 @@ bot_game={
 			common.change_money(2,300)
 		}
 		if (result===1){
+			sound.play('lost300')
 			sys_msg.add('Соперник проиграл 300 $')
 			common.change_money(2,-300)
 		}
@@ -4512,9 +4529,12 @@ bot_game={
 				}				
 			}
 			
-			sys_msg.add('Соперник не смог купил город по акции!')
+			sys_msg.add('Соперник не смог купить город по акции!')
 		}
-		
+		if (result===5){			
+			common.opp_no_rent_bonus=3
+			sys_msg.add('Соперник не платит ренту 3 хода!')
+		}
 		
 	}
 
@@ -4525,6 +4545,8 @@ common={
 	houses_num:30,
 	casino_buy_bonus:0,
 	chip_sound_timer:0,
+	my_no_rent_bonus:0,
+	opp_no_rent_bonus:0,
 
 	activate(){
 
@@ -4545,6 +4567,10 @@ common={
 		//начальный баланс
 		my_data.money=1000
 		opp_data.money=1000
+		
+		//бонусы не платить ренту
+		this.my_no_rent_bonus=0
+		this.opp_no_rent_bonus=0
 
 		//количество домов
 		this.houses_num=30
@@ -4757,8 +4783,7 @@ common={
 
 	},
 
-	async move_chip(chip, steps){
-		
+	async move_chip(chip, steps){		
 		
 		this.chip_sound_timer=setInterval(()=>{
 			if(!assets.chip_go.isPlaying)
@@ -4821,22 +4846,45 @@ common={
 		if (cell.owner===opp_player){
 
 			if (cell.type==='city'){
-				this.change_money(cur_player,-cell.rent[cell.level])
-				this.change_money(opp_player,+cell.rent[cell.level])
 				
-				sound.play('rent')
 				
-				if(cell.owner===1)
-					sys_msg.add(`Получите ренту: ${cell.rent[cell.level]}$`)
-				else
-					sys_msg.add(`Чужой город! Заплатите ренту: ${cell.rent[cell.level]}$`)
+				if (cell.owner===1){
+					//оппонент приземлился на мой участок
+					if (this.opp_no_rent_bonus){
+						sys_msg.add('Соперник не платит ренту')
+						sound.play('norent')
+					}else{
+						this.change_money(cur_player,-cell.rent[cell.level])
+						this.change_money(opp_player,+cell.rent[cell.level])
+						sys_msg.add(`Получите ренту: ${cell.rent[cell.level]}$`)
+						sound.play('rent')
+					}
+
+				}
+				
+				if (cell.owner===2){
+					//я приземлился на участок соперника
+					if(this.my_no_rent_bonus){
+						sys_msg.add('Вы не платите ренту')
+						sound.play('norent')
+					}else{
+						this.change_money(cur_player,-cell.rent[cell.level])
+						this.change_money(opp_player,+cell.rent[cell.level])
+						sys_msg.add(`Чужой город! Заплатите ренту: ${cell.rent[cell.level]}$`)
+						sound.play('rent')
+					}
+				}
+
 			}
 
 		}
 
+		//обнуляем бонусы
+		if (cur_player===1&&this.my_no_rent_bonus) this.my_no_rent_bonus--
+		if (cur_player===2&&this.opp_no_rent_bonus) this.opp_no_rent_bonus--
+
 		//можно покупать и продавать что захочешь
-		if (cur_player===1)
-			my_turn_started=1
+		if (cur_player===1) my_turn_started=1
 
 		//мой город
 		if (cell.owner===cur_player){
@@ -4878,8 +4926,6 @@ common={
 			if(cur_player===1)
 				plans.activate()
 		}
-
-		//city_dlg.show(cur_cell_id)
 
 		//завершение хода
 		if (cur_player===1){
@@ -4947,13 +4993,16 @@ common={
 					sys_msg.add('Соперник захватил Ваш город '+empty_city?.rus_name)					
 					
 				}else{
-					sys_msg.add('Соперник чуть не захватил Ваш город')
+					sys_msg.add('Соперник не смог захватить Ваш город')
 				}
 
 			}
-			
 			if (move_data.result===4){
 				sys_msg.add('Соперник может купить любой город')
+			}
+			if (move_data.result===5){
+				sys_msg.add('Соперник не платит ренту 3 хода!')
+				common.opp_no_rent_bonus=3
 			}
 		}
 
@@ -6794,6 +6843,8 @@ main_loader={
 		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3');
 		loader.add('casino',git_src+'sounds/casino.mp3');
 		loader.add('decline',git_src+'sounds/decline.mp3');
+		loader.add('lost300',git_src+'sounds/lost300.mp3');
+		loader.add('norent',git_src+'sounds/norent.mp3');
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
