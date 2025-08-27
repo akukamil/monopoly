@@ -791,7 +791,7 @@ class cell_class extends PIXI.Container{
 
 		this.city_name = new PIXI.BitmapText('City', {fontName: 'mfont32',fontSize: 16});
 		this.city_name.anchor.set(0.5,0.5);
-		this.city_name.y=-15;
+		this.city_name.y=-17;
 		this.city_name.tint=0xFBE5D6;
 
 		this.level_icon=new PIXI.Sprite()
@@ -802,21 +802,20 @@ class cell_class extends PIXI.Container{
 
 		this.auc_icon=new PIXI.Sprite(assets.auc_icon)
 		this.auc_icon.anchor.set(0.5,0.5)
-		this.auc_icon.y=1
+		this.auc_icon.y=-1
 		this.auc_icon.scale_xy=0.4
 		this.auc_icon.visible=false
 
 
 		this.icon=new PIXI.Sprite(assets.q_icon)
 		this.icon.anchor.set(0.5,0.5)
-		this.icon.width=40
-		this.icon.height=40
-		this.icon.y=-7.5		
+		this.icon.width=60
+		this.icon.height=60
 		this.icon.visible=false
 
 		this.price = new PIXI.BitmapText('0$', {fontName: 'mfont32',fontSize: 15});
 		this.price.anchor.set(0.5,0.5);
-		this.price.y=16;
+		this.price.y=17;
 		this.price.tint=0xFBE5FF;
 		
 		this.hl=new PIXI.Sprite(assets.cell_hl_img)
@@ -3014,8 +3013,8 @@ city_dlg={
 		objects.cell_info_prices_header.text='Рента'
 		objects.cell_info_params.text='Только город\nГород и 1 дом\nГород и 2 дома\nГород и 3 дома\nГород и 4 дома\nГород и отель'
 		objects.cell_info_prices.text='$ '+cell.rent[1]+'\n$ '+cell.rent[2]+'\n$ '+cell.rent[3]+'\n$ '+cell.rent[4]+'\n$ '+cell.rent[5]+'\n$ '+cell.rent[6]
-		objects.cell_info_params.y=140
-		objects.cell_info_prices.y=140
+		objects.cell_info_params.y=145
+		objects.cell_info_prices.y=145
 
 
 		const btn1=objects.cell_info_btn1
@@ -3039,7 +3038,7 @@ city_dlg={
 		if (cell.owner===0){
 
 			this.place_buttons(1,'buy')
-			btn2_t.text=`КУПИТЬ ГОРОД\n-${cell.price}`
+			btn2_t.text=`КУПИТЬ ГОРОД\n-$${cell.price}`
 			//sys_msg.add('Это свободный участок...')
 			return
 		}
@@ -3243,7 +3242,7 @@ auc={
 		if (this.state==='on_my_bid'){
 			objects.auc_decline_btn.alpha=1
 			objects.auc_make_bid_btn.alpha=1
-			objects.auc_info.text='Делайте ставку, сэр...'
+			objects.auc_info.text='Делайте ставку...'
 		}
 		if (this.state==='on_opp_bid'){
 			objects.auc_decline_btn.alpha=0.5
@@ -3409,6 +3408,7 @@ auc={
 
 			if (this.new_bid<=this.cur_bid&&this.started){
 				objects.auc_info.text='Выберите ставку больше!'
+				sound.play('decline')
 				return
 			}
 
@@ -4640,7 +4640,6 @@ common={
 				cell_obj.buttonMode=false
 				cell_obj.auc_icon.visible=false
 				cell_obj.icon.visible=false
-
 			}
 
 			if (cell.type==='start'){
@@ -4726,12 +4725,12 @@ common={
 
 		if (cell.owner===1)	{
 			cell_spr.bcg.texture=assets.cell_bcg_white
-			cell_spr.city_name.tint=0x0DA6ED
-			cell_spr.level_icon.tint=0x5C84CC
+			cell_spr.city_name.tint=0xffffff
+			cell_spr.level_icon.tint=0x999999
 		}
 		if (cell.owner===2){
 			cell_spr.bcg.texture=assets.cell_bcg_yellow
-			cell_spr.city_name.tint=0x9F6C04			
+			cell_spr.city_name.tint=0xffffff
 			cell_spr.level_icon.tint=0xC00000
 		}
 		if (cell.owner===0){
@@ -4791,7 +4790,7 @@ common={
 
 	},
 
-	async move_chip(chip, steps){		
+	async move_chip(chip, steps){
 		
 		this.chip_sound_timer=setInterval(()=>{
 			if(!assets.chip_go.isPlaying)
@@ -6907,6 +6906,8 @@ main_loader={
 				break;
 
 			case "block":
+				if (obj_name==='cells')
+					console.log(main_load_list[i].code)
 				eval(main_load_list[i].code0);
 				break;
 
