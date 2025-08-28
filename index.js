@@ -3009,13 +3009,12 @@ city_dlg={
 		this.cur_cell=cell
 
 		objects.cell_info_title.text=cell.rus_name
-		objects.cell_info_params_header.text='Уровень'
-		objects.cell_info_prices_header.text='Рента'
+		//objects.cell_info_params_header.text='Уровень'
+		//objects.cell_info_prices_header.text='Рента'
 		objects.cell_info_params.text='Только город\nГород и 1 дом\nГород и 2 дома\nГород и 3 дома\nГород и 4 дома\nГород и отель'
 		objects.cell_info_prices.text='$ '+cell.rent[1]+'\n$ '+cell.rent[2]+'\n$ '+cell.rent[3]+'\n$ '+cell.rent[4]+'\n$ '+cell.rent[5]+'\n$ '+cell.rent[6]
-		objects.cell_info_params.y=145
-		objects.cell_info_prices.y=145
-
+		objects.cell_info_params.y=155
+		objects.cell_info_prices.y=155
 
 		const btn1=objects.cell_info_btn1
 		const btn2=objects.cell_info_btn2
@@ -3024,7 +3023,7 @@ city_dlg={
 
 		//текущий уровень
 		objects.cell_info_cur_level_hl.visible=cell.level?true:false
-		objects.cell_info_cur_level_hl.y=107+cell.level*21
+		objects.cell_info_cur_level_hl.y=123+cell.level*21
 
 		if (cell.owner===2){
 			this.place_buttons(1)
@@ -3122,6 +3121,7 @@ city_dlg={
 		//отправляем сопернику
 		opponent.send({sender:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
 
+		this.update(this.cur_cell)
 		this.close()
 	},
 
@@ -3155,8 +3155,7 @@ city_dlg={
 
 	close(){
 
-		
-		objects.cell_info_cont.visible=false
+		anim3.add(objects.cell_info_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5);
 
 	},
 
