@@ -5390,6 +5390,9 @@ vk={
 }
 
 main_menu={
+	
+	prv_anim_tm:0,
+	prv_bliq_tm:0,
 
 	async activate() {
 
@@ -5405,13 +5408,14 @@ main_menu={
 
 		anim3.add(objects.title_online,{x:[850,objects.title_online.sx,'easeOutBack']}, true, 0.5);
 
-
+		this.prv_anim_tm=Date.now()
+		this.prv_bliq_tm=Date.now()
 
 		if (game_platform==='VK')
 			anim3.add(objects.vk_buttons_cont,{alpha:[0,1,'linear']}, true, 0.5);
 
-		some_process.main_menu=this.process;
-		
+		this.process_timer=setInterval(()=>{this.process()},100)
+	
 		
 		//кнопки
 		await anim3.add(objects.main_btn_cont,{x:[800,objects.main_btn_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.75);
@@ -5420,17 +5424,27 @@ main_menu={
 
 	process(){
 
-		objects.main_title_blique.x+=20;
-		if (objects.main_title_blique.x>2000)
-			objects.main_title_blique.x=0;
+		const tm=Date.now()
 		
-		if (Math.random()>0.96){
-			const dir=irnd(-5,5)
-			objects.uncle_head.x+=dir
-			objects.uncle_hands.x+=dir+irnd(-2,2)
-			objects.uncle_head.angle=irnd(-3,3)
+		if (tm-this.prv_anim_tm>2000){
+			
+			
+			const head_tar_ang=irnd(-15,15)
+			const head_rand_and=Math.random()*6.2831853
+			const head_tar_x=objects.uncle_head.sx+Math.sin(head_rand_and)*10
+			const head_tar_y=objects.uncle_head.sy+Math.cos(head_rand_and)*10
+			
+			anim3.add(objects.uncle_head,{x:[objects.uncle_head.x, head_tar_x,'linear'],y:[objects.uncle_head.y, head_tar_y,'linear'],angle:[objects.uncle_head.angle, head_tar_ang,'linear']}, true, 0.5,false)
+			anim3.add(objects.uncle_hands,{x:[objects.uncle_hands.x, head_tar_x,'linear'],scale_x:[0.6666,0.62,'ease2back']}, true, 0.5,false)
+						
+			this.prv_anim_tm=tm
+			
 		}
-
+		
+		if (tm-this.prv_bliq_tm>2500){
+			anim3.add(objects.main_title_blique,{x:[-20, 800,'linear']}, false, 0.6,false)
+			this.prv_bliq_tm=tm
+		}
 
 	},
 
@@ -5466,7 +5480,7 @@ main_menu={
 		//кнопки
 		anim3.add(objects.main_menu_cont,{alpha:[1,0,'linear']}, false, 0.5);
 
-		some_process.main_menu=function(){};
+		clearInterval(this.process_timer)
 
 		//vk
 		//if(objects.vk_buttons_cont.visible)
