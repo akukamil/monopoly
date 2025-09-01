@@ -5433,8 +5433,9 @@ main_menu={
 			const head_rand_and=Math.random()*6.2831853
 			const head_tar_x=objects.uncle_head.sx+Math.sin(head_rand_and)*10
 			const head_tar_y=objects.uncle_head.sy+Math.cos(head_rand_and)*10
+			const head_tar_s=Math.random()*0.2+0.6666-0.1
 			
-			anim3.add(objects.uncle_head,{x:[objects.uncle_head.x, head_tar_x,'linear'],y:[objects.uncle_head.y, head_tar_y,'linear'],angle:[objects.uncle_head.angle, head_tar_ang,'linear']}, true, 0.5,false)
+			anim3.add(objects.uncle_head,{scale_xy:[objects.uncle_head.scale_xy,head_tar_s,'linear'],x:[objects.uncle_head.x, head_tar_x,'linear'],y:[objects.uncle_head.y, head_tar_y,'linear'],angle:[objects.uncle_head.angle, head_tar_ang,'linear']}, true, 0.5,false)
 			anim3.add(objects.uncle_hands,{x:[objects.uncle_hands.x, head_tar_x,'linear'],scale_x:[0.6666,0.62,'ease2back']}, true, 0.5,false)
 						
 			this.prv_anim_tm=tm
