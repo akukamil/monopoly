@@ -5691,6 +5691,9 @@ lobby={
 		}
 
 		set_state({state : 'o'});
+		
+		
+		objects.bcg.texture=assets.lobby_bcg
 
 		//создаем заголовки
 		const room_desc=['КОМНАТА #','ROOM #'][LANG]+room_name.slice(6);
