@@ -276,8 +276,8 @@ anim3={
 
 			found=true;
 
-			obj.visible = true;
-			obj.ready = false;
+			obj.visible = true
+			obj.ready = false
 
 			//заносим базовые параметры слота
 			slot.on=1;
@@ -362,9 +362,9 @@ anim3={
 					slot.obj.visible=slot.vis_on_end;
 					if(!slot.vis_on_end) slot.obj.alpha=1;
 
-					slot.obj.ready=true;
-					slot.p_resolve(1);
-					slot.on = 0;
+					slot.obj.ready=true
+					slot.p_resolve(1)
+					slot.on = 0
 				}
 			}
 		}
@@ -1495,13 +1495,20 @@ game_msgs={
 	activate(){
 	
 		objects.game_msgs_cont.y=objects.game_msgs_cont.sy
-		for (let i=0;i<objects.game_msgs.length;i++)
-			objects.game_msgs[i].y=i*15;
+		for (let i=0;i<objects.game_msgs.length;i++){
+			objects.game_msgs[i].y=i*15
+			objects.game_msgs[i].text=''
+		}
+
 		
 	},
 	
 	add(t){
 		
+		if (!objects.game_msgs_cont.ready){
+			setTimeout(()=>{this.add(t)},100)
+			return
+		}
 		objects.game_msgs.forEach(m=>m.alpha=0.7)
 		anim3.add(objects.game_msgs_cont,{y:[objects.game_msgs_cont.y, objects.game_msgs_cont.y+15,'linear']}, true, 0.25);
 		const last_rec=this.get_last_rec()
@@ -3359,7 +3366,7 @@ auc={
 		if(data.type==='auc_buy'){
 			common.buy(2,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
-			game_msgs.add('Соперник купил город '+this.cur_cell.rus_name)
+			game_msgs.add('Соперник выиграл на аукционе город '+this.cur_cell.rus_name)
 		}
 
 		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
@@ -3602,7 +3609,7 @@ casino={
 				sound.play('city_lost')
 				game_msgs.add('Вы проиграли город '+empty_city?.rus_name)
 			}else{
-				sys_msg.add('У вас нет одиноких городов')	
+				game_msgs.add('Вам выпало потерять пустой город, но у вас их нет)))')	
 			}
 
 		}
@@ -3612,28 +3619,30 @@ casino={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.capture_empty_city(empty_city)
 				city_id=empty_city.id
-				game_msgs.add('Вы захватили город '+empty_city?.rus_name)
+				game_msgs.add('Вы выиграли город соперника '+empty_city?.rus_name)
 			}else{
-				sys_msg.add('У соперника нет одиноких городов')	
+				game_msgs.add('Вы выиграли захват пустого города, но у соперника их нет(((')	
 			}
 		}
 		if (result===4){
-			sys_msg.add('Вы можете купить любой город!')
+			game_msgs.add('Вы можете купить любой город!')
 			sound.play('can_buy_any_city')
 			common.casino_buy_bonus=1
 		}
 		if (result===5){
-			sys_msg.add('Вы не платите ренту 3 хода!')
+			game_msgs.add('Вы не платите ренту 3 хода!')
 			sound.play('can_buy_any_city')
 			common.my_no_rent_bonus=3
 		}
 		opponent.send({sender:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
 
 		this.state='fin'
-		objects.casino_btn1.visible=false
-		objects.casino_btn2.x=120
-		objects.casino_btn2.alpha=1
-		objects.casino_btn2.texture=assets.casino_exit_btn_img
+		//objects.casino_btn1.visible=false
+		//objects.casino_btn2.x=120
+		//objects.casino_btn2.alpha=1
+		//objects.casino_btn2.texture=assets.casino_exit_btn_img
+		
+		setTimeout(()=>{this.close()},1000)
 
 	},
 
@@ -3658,7 +3667,6 @@ casino={
 	btn2_down(){
 
 		if (this.state==='fin'){
-			this.close()
 			return
 		}
 
@@ -3930,7 +3938,7 @@ plans={
 	close_btn_down(){
 
 		sound.play('click')
-		anim3.add(objects.plans_cont,{alpha:[1, 0,'linear'],scale_xy:[1,0.5,'linear']}, false, 0.2);
+		anim3.add(objects.plans_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5);
 
 	},
 
@@ -3966,6 +3974,8 @@ plans={
 			return
 		}
 
+		setTimeout(()=>{this.close_btn_down()},300)
+		
 		//активация бонуса
 		if (this.plans_progress[i]===100){
 
@@ -3975,7 +3985,7 @@ plans={
 				if(empty_cities.length){
 					
 					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
-					game_msgs.add('Вы достигли цели и захватили город '+city_cell.rus_name)
+					game_msgs.add('Вы достигли цели ВОЙНА и захватили город '+city_cell.rus_name)
 					common.capture_empty_city(city_cell)
 					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
@@ -3986,7 +3996,7 @@ plans={
 
 			if (i===1){
 				common.set_money(2,-300)
-				game_msgs.add('Вы достигли цели КРАЖА')
+				game_msgs.add('Вы достигли цели КРАЖА баланс соперника -300$ )))')
 				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
@@ -4010,7 +4020,7 @@ plans={
 		this.plans_progress[i]+=25
 		this.plans_progress[i]=Math.min(this.plans_progress[i],100)
 		
-		game_msgs.add('Вы доработали план')
+		game_msgs.add('Вы доработали план '+['ВОЙНА','КРАЖА','НАСЛЕДСТВО'][i])
 
 		objects.plans_mask[i].width=this.plans_progress[i]
 		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
@@ -4018,6 +4028,8 @@ plans={
 		opponent.send({sender:my_data.uid,type:'plan',id:-1,tm:Date.now()})
 
 		this.update()
+		
+		
 
 	},
 
@@ -4092,8 +4104,13 @@ online_game={
 		//fbs.ref('players/'+my_data.uid+'/rating').set(my_data.lose_rating);
 
 		//общие параметры
-		common.activate();
-
+		common.activate()
+		
+		if (my_turn)
+			game_msgs.add('Началась онлайн игра, ваш ход...')
+		else
+			game_msgs.add('Началась онлайн игра, начинает соперник...')
+		
 		//запоминаем оппонента
 		opponent=this;
 
@@ -4661,9 +4678,9 @@ bot_game={
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
 				sound.play('city_lost')
-				game_msgs.add('Соперник потерял город '+empty_city?.rus_name)
+				game_msgs.add('Соперник в казино город '+empty_city?.rus_name)
 			}else{
-				sys_msg.add('У соперника нет одиноких городов')	
+				game_msgs.add('Соперник чуть не потерял город в казино')	
 			}
 
 		}
@@ -4673,9 +4690,9 @@ bot_game={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.capture_empty_city(empty_city)
 				city_id=empty_city.id
-				game_msgs.add('Соперник захватили Ваш город '+empty_city.rus_name)
+				game_msgs.add('Соперник захватил Ваш город '+empty_city.rus_name)
 			}else{
-				sys_msg.add('У вас нет одиноких городов, повезло')	
+				game_msgs.add('У вас нет одиноких городов, повезло')	
 			}
 		}
 		if (result===4){
@@ -5211,17 +5228,17 @@ common={
 			const city_cell=cells_data[data.city_id]
 			const city_name=city_cell.rus_name
 			common.capture_empty_city(city_cell)
-			game_msgs.add('Соперник реализовал план и захватил Ваш город ('+city_name+')')
+			game_msgs.add('Соперник реализовал план ВОЙНА и захватил Ваш город ('+city_name+')')
 		}
 
 		if (data.id===1){
 			common.set_money(1,-300)
-			game_msgs.add('Соперник достигли цели КРАЖА')
+			game_msgs.add('Соперник достигли цели КРАЖА, ваш баланс -300$')
 		}
 
 		if (data.id===2){
 			common.change_money(2,2000)
-			game_msgs.add('Соперник достигл цели Наследство')
+			game_msgs.add('Соперник достигл цели НАСЛЕДСТВО и получил 2000$')
 		}
 
 		if (data.id===100){
