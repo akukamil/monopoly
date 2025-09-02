@@ -1453,6 +1453,77 @@ sys_msg={
 
 }
 
+message={
+
+	promise_resolve :0,
+
+	async add(data={text:'---', timeout:3000,sound_name:'online_message',sender:'me'}) {
+
+		if (this.promise_resolve!==0) this.promise_resolve('forced');
+
+		//воспроизводим звук
+		sound.play(data.sound_name);
+
+		objects.message_text.text=data.text;
+
+		await anim3.add(objects.message_cont,{alpha:[0,1,'linear']}, true, 0.25,false);
+
+		const res = await new Promise((resolve, reject) => {
+				message.promise_resolve = resolve;
+				setTimeout(resolve, data.timeout)
+			}
+		);
+
+		//это если насильно закрываем
+		if (res==='forced') return;
+
+		anim3.add(objects.message_cont,{alpha:[1, 0,'linear']}, false, 0.25,false);
+	},
+
+	clicked() {
+
+
+		message.promise_resolve();
+
+	}
+
+}
+
+game_msgs={
+	
+	
+	activate(){
+	
+		objects.game_msgs_cont.y=objects.game_msgs_cont.sy
+		for (let i=0;i<objects.game_msgs.length;i++)
+			objects.game_msgs[i].y=i*15;
+		
+	},
+	
+	add(t){
+		
+		objects.game_msgs.forEach(m=>m.alpha=0.7)
+		anim3.add(objects.game_msgs_cont,{y:[objects.game_msgs_cont.y, objects.game_msgs_cont.y+15,'linear']}, true, 0.25);
+		const last_rec=this.get_last_rec()
+		last_rec.y-=60
+		last_rec.text=t
+		last_rec.alpha=1
+		
+	},
+	
+	get_last_rec(){
+		
+		let last_rec=objects.game_msgs[0]
+		for (let i=0;i<objects.game_msgs.length;i++)
+			if (objects.game_msgs[i].y>last_rec.y)
+				last_rec=objects.game_msgs[i]
+		return last_rec
+	}
+	
+	
+	
+}
+
 stickers={
 
 	promise_resolve_send :0,
@@ -1761,8 +1832,8 @@ confirm_dialog = {
 
 keyboard={
 
-	ru_keys:[[54.38,100,88.52,139.24,'1'],[99.9,100,134.04,139.24,'2'],[145.41,100,179.55,139.24,'3'],[190.93,100,225.07,139.24,'4'],[236.45,100,270.59,139.24,'5'],[281.97,100,316.11,139.24,'6'],[327.48,100,361.62,139.24,'7'],[373,100,407.14,139.24,'8'],[418.52,100,452.66,139.24,'9'],[464.03,100,498.17,139.24,'0'],[556.21,100,613.11,139.24,'<'],[77.14,149.05,111.28,188.29,'Й'],[122.66,149.05,156.8,188.29,'Ц'],[168.17,149.05,202.31,188.29,'У'],[213.69,149.05,247.83,188.29,'К'],[259.21,149.05,293.35,188.29,'Е'],[304.72,149.05,338.86,188.29,'Н'],[350.24,149.05,384.38,188.29,'Г'],[395.76,149.05,429.9,188.29,'Ш'],[441.28,149.05,475.42,188.29,'Щ'],[486.79,149.05,520.93,188.29,'З'],[532.31,149.05,566.45,188.29,'Х'],[577.83,149.05,611.97,188.29,'Ъ'],[99.9,198.09,134.04,237.33,'Ф'],[145.41,198.09,179.55,237.33,'Ы'],[190.93,198.09,225.07,237.33,'В'],[236.45,198.09,270.59,237.33,'А'],[281.97,198.09,316.11,237.33,'П'],[327.48,198.09,361.62,237.33,'Р'],[373,198.09,407.14,237.33,'О'],[418.52,198.09,452.66,237.33,'Л'],[464.03,198.09,498.17,237.33,'Д'],[509.55,198.09,543.69,237.33,'Ж'],[555.07,198.09,589.21,237.33,'Э'],[77.14,247.14,111.28,286.38,'!'],[122.66,247.14,156.8,286.38,'Я'],[168.17,247.14,202.31,286.38,'Ч'],[213.69,247.14,247.83,286.38,'С'],[259.21,247.14,293.35,286.38,'М'],[304.72,247.14,338.86,286.38,'И'],[350.24,247.14,384.38,286.38,'Т'],[395.76,247.14,429.9,286.38,'Ь'],[441.28,247.14,475.42,286.38,'Б'],[486.79,247.14,520.93,286.38,'Ю'],[578.97,247.14,613.11,286.38,')'],[510.69,100,544.83,139.24,'?'],[31.62,296.18,202.31,346,'ЗАКРЫТЬ'],[213.69,296.18,475.41,346,' '],[486.79,296.18,646.1,346,'ОТПРАВИТЬ'],[601.72,198.09,635.86,237.33,','],[533.45,247.14,567.59,286.38,'('],[31.62,198.09,88.52,237.33,'EN']],
-	en_keys:[[56.65,100,90.78,139.08,'1'],[102.15,100,136.28,139.08,'2'],[147.66,100,181.79,139.08,'3'],[193.17,100,227.3,139.08,'4'],[238.68,100,272.81,139.08,'5'],[284.18,100,318.31,139.08,'6'],[329.69,100,363.82,139.08,'7'],[375.2,100,409.33,139.08,'8'],[420.71,100,454.84,139.08,'9'],[466.22,100,500.35,139.08,'0'],[558.37,100,615.25,139.08,'<'],[124.91,148.85,159.04,187.93,'Q'],[170.41,148.85,204.54,187.93,'W'],[215.92,148.85,250.05,187.93,'E'],[261.43,148.85,295.56,187.93,'R'],[306.94,148.85,341.07,187.93,'T'],[352.45,148.85,386.58,187.93,'Y'],[397.95,148.85,432.08,187.93,'U'],[443.46,148.85,477.59,187.93,'I'],[488.97,148.85,523.1,187.93,'O'],[534.48,148.85,568.61,187.93,'P'],[147.66,197.69,181.79,236.77,'A'],[193.17,197.69,227.3,236.77,'S'],[238.68,197.69,272.81,236.77,'D'],[284.18,197.69,318.31,236.77,'F'],[329.69,197.69,363.82,236.77,'G'],[375.2,197.69,409.33,236.77,'H'],[420.71,197.69,454.84,236.77,'J'],[466.22,197.69,500.35,236.77,'K'],[511.72,197.69,545.85,236.77,'L'],[535.61,246.54,569.74,285.62,'('],[79.4,246.54,113.53,285.62,'!'],[170.41,246.54,204.54,285.62,'Z'],[215.92,246.54,250.05,285.62,'X'],[261.43,246.54,295.56,285.62,'C'],[306.94,246.54,341.07,285.62,'V'],[352.45,246.54,386.58,285.62,'B'],[397.95,246.54,432.08,285.62,'N'],[443.46,246.54,477.59,285.62,'M'],[581.12,246.54,615.25,285.62,')'],[512.86,100,546.99,139.08,'?'],[33.89,295.39,204.54,346,'CLOSE'],[215.92,295.39,477.59,346,' '],[488.97,295.39,648.25,346,'SEND'],[603.88,197.69,638.01,236.77,','],[33.89,197.69,90.77,236.77,'RU']],
+	ru_keys:[[49,122.05,79,161.12,'1'],[89,122.05,119,161.12,'2'],[129,122.05,159,161.12,'3'],[169,122.05,199,161.12,'4'],[209,122.05,239,161.12,'5'],[249,122.05,279,161.12,'6'],[289,122.05,319,161.12,'7'],[329,122.05,359,161.12,'8'],[369,122.05,399,161.12,'9'],[409,122.05,439,161.12,'0'],[490,122.05,540,161.12,'<'],[69,170.88,99,209.95,'Й'],[109,170.88,139,209.95,'Ц'],[149,170.88,179,209.95,'У'],[189,170.88,219,209.95,'К'],[229,170.88,259,209.95,'Е'],[269,170.88,299,209.95,'Н'],[309,170.88,339,209.95,'Г'],[349,170.88,379,209.95,'Ш'],[389,170.88,419,209.95,'Щ'],[429,170.88,459,209.95,'З'],[469,170.88,499,209.95,'Х'],[509,170.88,539,209.95,'Ъ'],[89,219.72,119,258.79,'Ф'],[129,219.72,159,258.79,'Ы'],[169,219.72,199,258.79,'В'],[209,219.72,239,258.79,'А'],[249,219.72,279,258.79,'П'],[289,219.72,319,258.79,'Р'],[329,219.72,359,258.79,'О'],[369,219.72,399,258.79,'Л'],[409,219.72,439,258.79,'Д'],[449,219.72,479,258.79,'Ж'],[489,219.72,519,258.79,'Э'],[69,268.56,99,307.63,'!'],[109,268.56,139,307.63,'Я'],[149,268.56,179,307.63,'Ч'],[189,268.56,219,307.63,'С'],[229,268.56,259,307.63,'М'],[269,268.56,299,307.63,'И'],[309,268.56,339,307.63,'Т'],[349,268.56,379,307.63,'Ь'],[389,268.56,419,307.63,'Б'],[429,268.56,459,307.63,'Ю'],[510,268.56,540,307.63,')'],[450,122.05,480,161.12,'?'],[29,317.4,179,356.47,'ЗАКРЫТЬ'],[189,317.4,419,356.47,' '],[429,317.4,569,356.47,'ОТПРАВИТЬ'],[530,219.72,560,258.79,','],[470,268.56,500,307.63,'('],[29,219.72,79,258.79,'EN']],
+	en_keys:[[51,120.58,81,159.65,'1'],[91,120.58,121,159.65,'2'],[131,120.58,161,159.65,'3'],[171,120.58,201,159.65,'4'],[211,120.58,241,159.65,'5'],[251,120.58,281,159.65,'6'],[291,120.58,321,159.65,'7'],[331,120.58,361,159.65,'8'],[371,120.58,401,159.65,'9'],[411,120.58,441,159.65,'0'],[492,120.58,542,159.65,'<'],[111,169.42,141,208.49,'Q'],[151,169.42,181,208.49,'W'],[191,169.42,221,208.49,'E'],[231,169.42,261,208.49,'R'],[271,169.42,301,208.49,'T'],[311,169.42,341,208.49,'Y'],[351,169.42,381,208.49,'U'],[391,169.42,421,208.49,'I'],[431,169.42,461,208.49,'O'],[471,169.42,501,208.49,'P'],[131,218.26,161,257.33,'A'],[171,218.26,201,257.33,'S'],[211,218.26,241,257.33,'D'],[251,218.26,281,257.33,'F'],[291,218.26,321,257.33,'G'],[331,218.26,361,257.33,'H'],[371,218.26,401,257.33,'J'],[411,218.26,441,257.33,'K'],[451,218.26,481,257.33,'L'],[472,267.09,502,306.16,'('],[71,267.09,101,306.16,'!'],[151,267.09,181,306.16,'Z'],[191,267.09,221,306.16,'X'],[231,267.09,261,306.16,'C'],[271,267.09,301,306.16,'V'],[311,267.09,341,306.16,'B'],[351,267.09,381,306.16,'N'],[391,267.09,421,306.16,'M'],[512,267.09,542,306.16,')'],[452,120.58,482,159.65,'?'],[31,315.93,181,355,'CLOSE'],[191,315.93,421,355,' '],[431,315.93,571,355,'SEND'],[532,218.26,562,257.33,','],[31,218.26,81,257.33,'RU']],
 	layout:0,
 	resolver:0,
 
@@ -1774,15 +1845,12 @@ keyboard={
 		if (!this.layout)this.switch_layout();
 
 		//если какой-то ресолвер открыт
-		if(this.resolver) {
-			this.resolver('');
-			this.resolver=0;
-		}
+		if(this.resolver) this.resolver('');
 
 		objects.chat_keyboard_text.text ='';
 		objects.chat_keyboard_control.text = `0/${this.MAX_SYMBOLS}`
 
-		anim3.add(objects.chat_keyboard_cont,{y:[450, objects.chat_keyboard_cont.sy,'linear']}, true, 0.2);
+		anim3.add(objects.chat_keyboard_cont,{y:[450, objects.chat_keyboard_cont.sy,'linear']}, true, 0.2)
 
 
 		return new Promise(resolve=>{
@@ -1879,7 +1947,6 @@ keyboard={
 		const t=objects.chat_keyboard_text.text;
 		if ((key==='ОТПРАВИТЬ'||key==='SEND')&&t.length>0){
 			this.resolver(t);
-			this.resolver=0;
 			this.close();
 			key ='';
 		}
@@ -2812,6 +2879,13 @@ dice={
 
 	},
 	
+	set_random(){
+		
+		objects.dice0.texture=assets['d'+irnd(1,6)]
+		objects.dice1.texture=assets['d'+irnd(1,6)]
+		
+	},
+	
 	stop(){
 		clearInterval(this.roll_timer)
 		clearInterval(this.roll_timer2)
@@ -2857,7 +2931,6 @@ big_msg = {
 		anim3.add(objects.big_msg_cont,{y:[-180,objects.big_msg_cont.sy,'easeOutBack']}, true, 0.6);
 
 		this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
-		this.show_bonus_anim(objects.big_msg_crystals,params.crystals||0)
 
 		return new Promise(function(resolve, reject){
 			big_msg.p_resolve = resolve;
@@ -2885,7 +2958,7 @@ big_msg = {
 
 	async feedback_down() {
 
-		if (anim2.any_on()){
+		if (anim3.any_on()){
 			sound.play('locked');
 			return;
 		}
@@ -3286,7 +3359,7 @@ auc={
 		if(data.type==='auc_buy'){
 			common.buy(2,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
-			sys_msg.add('Соперник купил город!!!')
+			game_msgs.add('Соперник купил город '+this.cur_cell.rus_name)
 		}
 
 		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
@@ -3303,14 +3376,14 @@ auc={
 		if(data.type==='auc_dec2'){
 			sound.play('decline')
 			objects.auc_cont.visible=false
-			sys_msg.add('Соперник тоже отказался покупать!')
+			game_msgs.add('Соперник тоже отказался покупать!')
 		}
 
 		//соперник отказался от аукциона, но ставка уже сделана
 		if(data.type==='auc_giveup'){
 			common.buy(1,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
-			sys_msg.add('Вы выиграли аукцион! Город Ваш!')
+			game_msgs.add('Вы выиграли аукцион! Город Ваш!')
 		}
 	},
 
@@ -3382,7 +3455,7 @@ auc={
 		if(this.state==='on_auc_dec'){
 			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_dec2',tm:Date.now()})
-			sys_msg.add('Вы тоже отказались от покупки!')
+			game_msgs.add('Вы тоже отказались от покупки!')
 			objects.auc_cont.visible=false
 		}
 
@@ -3400,7 +3473,7 @@ auc={
 			sound.play('decline')
 			opponent.send({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
 			common.buy(2,this.cur_cell,this.cur_bid)
-			sys_msg.add('Вы проиграли аукцион. Город купил соперник!')
+			game_msgs.add('Вы проиграли аукцион. Город купил соперник!')
 			objects.auc_cont.visible=false
 		}
 
@@ -3446,7 +3519,7 @@ auc={
 		//соперник сразу отказался, можно купить
 		if (this.state==='on_auc_dec'){
 			this.state=''
-			sys_msg.add('Вы купили с аукциона') //это когда соперник отказался от аукциона
+			game_msgs.add('Вы купили с аукциона') //это когда соперник отказался от аукциона
 			objects.auc_cont.visible=false
 			common.buy(1,this.cur_cell)
 
@@ -3512,12 +3585,12 @@ casino={
 		
 		if (result===0){
 			sound.play('lost300')
-			sys_msg.add('Вы выиграли 300 $')
+			game_msgs.add('Вы выиграли 300 $ в казино')
 			common.change_money(1,300)
 		}
 		if (result===1){
 			sound.play('casino_m_300')
-			sys_msg.add('Вы проиграли 300 $')
+			game_msgs.add('Вы проиграли 300 $ в казино')
 			common.change_money(1,-300)
 		}
 		if (result===2){
@@ -3527,7 +3600,7 @@ casino={
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
 				sound.play('city_lost')
-				sys_msg.add('Вы проиграли город '+empty_city?.rus_name)
+				game_msgs.add('Вы проиграли город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У вас нет одиноких городов')	
 			}
@@ -3539,7 +3612,7 @@ casino={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.capture_empty_city(empty_city)
 				city_id=empty_city.id
-				sys_msg.add('Вы захватили город '+empty_city?.rus_name)
+				game_msgs.add('Вы захватили город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У соперника нет одиноких городов')	
 			}
@@ -3573,7 +3646,7 @@ casino={
 
 		if (this.state==='ready'){
 			opponent.send({sender:my_data.uid,type:'casino_decline',tm:Date.now()})
-			sys_msg.add('Вы отказались от игры в казино')
+			game_msgs.add('Вы отказались от игры в казино')
 			this.close()
 			return
 		}
@@ -3766,7 +3839,7 @@ exch={
 
 		if (this.state==='opp_offer'){
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_decline',tm:Date.now()})
-			sys_msg.add('Вы отклонили сделку!')
+			game_msgs.add('Вы отклонили сделку!')
 		}
 
 		this.close()
@@ -3786,7 +3859,7 @@ exch={
 			//отправляем сопернику
 			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_approve',tm:Date.now()})
 
-			sys_msg.add('Вы одобрили сделку сделку!')
+			game_msgs.add('Вы одобрили сделку сделку!')
 			this.close()
 		}
 
@@ -3811,7 +3884,7 @@ exch={
 	opp_decline(){
 
 		this.close()
-		sys_msg.add('Соперник отклонил сделку!')
+		game_msgs.add('Соперник отклонил сделку!')
 	},
 
 	opp_approve(){
@@ -3826,7 +3899,7 @@ exch={
 		common.update_view(cells_data[this.get_city_id])
 
 		this.close()
-		sys_msg.add('Соперник одобрил сделку!')
+		game_msgs.add('Соперник одобрил сделку!')
 	},
 
 	close(){
@@ -3902,7 +3975,7 @@ plans={
 				if(empty_cities.length){
 					
 					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
-					sys_msg.add('Вы достигли цели и захватили город '+city_cell.rus_name)
+					game_msgs.add('Вы достигли цели и захватили город '+city_cell.rus_name)
 					common.capture_empty_city(city_cell)
 					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
@@ -3912,14 +3985,14 @@ plans={
 			}
 
 			if (i===1){
-				common.set_money(2,1)
-				sys_msg.add('Вы достигли цели КРАЖА')
+				common.set_money(2,-300)
+				game_msgs.add('Вы достигли цели КРАЖА')
 				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
 			if (i===2){
 				common.change_money(1,2000)
-				sys_msg.add('Вы достигли цели НАСЛЕДСТВО (+2000 $)')
+				game_msgs.add('Вы достигли цели НАСЛЕДСТВО (+2000 $)')
 				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
@@ -3936,6 +4009,8 @@ plans={
 
 		this.plans_progress[i]+=25
 		this.plans_progress[i]=Math.min(this.plans_progress[i],100)
+		
+		game_msgs.add('Вы доработали план')
 
 		objects.plans_mask[i].width=this.plans_progress[i]
 		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
@@ -3954,7 +4029,7 @@ plans={
 		}
 		this.action_made=1
 		common.change_money(1,100)
-		sys_msg.add('Вы получили 100 $')
+		game_msgs.add('Вы получили 100 $')
 		opponent.send({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
 	}
 
@@ -4294,7 +4369,9 @@ bot_game={
 
 		}
 
-		common.activate();
+		common.activate()
+		
+		game_msgs.add('Игра против бота началась, ваш ход...')
 
 	},
 
@@ -4546,10 +4623,10 @@ bot_game={
 					common.capture_empty_city(empty_city)
 					this.plans_progress[0]=0
 					sound.play('achivement')
-					sys_msg.add('Соперника реализовал план Захват ('+empty_city.rus_name+')')
+					game_msgs.add('Соперник реализовал план Захват ('+empty_city.rus_name+')')
 				}else{
 					
-					sys_msg.add('Соперника не смог реализовать план Захват!')
+					game_msgs.add('Соперник не смог реализовать план Захват!')
 				}
 			}else{
 				this.plans_progress[0]+=25
@@ -4569,12 +4646,12 @@ bot_game={
 		let city_id=0
 		
 		if (result===0){
-			sys_msg.add('Соперник выиграл 300 $')
+			game_msgs.add('Соперник выиграл 300 $ в казино')
 			common.change_money(2,300)
 		}
 		if (result===1){
 			sound.play('lost300')
-			sys_msg.add('Соперник проиграл 300 $')
+			game_msgs.add('Соперник проиграл 300 $ в казино')
 			common.change_money(2,-300)
 		}
 		if (result===2){
@@ -4584,7 +4661,7 @@ bot_game={
 				common.remove_empty_city(empty_city)
 				city_id=empty_city.id
 				sound.play('city_lost')
-				sys_msg.add('Соперник потерял город '+empty_city?.rus_name)
+				game_msgs.add('Соперник потерял город '+empty_city?.rus_name)
 			}else{
 				sys_msg.add('У соперника нет одиноких городов')	
 			}
@@ -4596,7 +4673,7 @@ bot_game={
 				const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
 				common.capture_empty_city(empty_city)
 				city_id=empty_city.id
-				sys_msg.add('Соперник захватили Ваш город '+empty_city.rus_name)
+				game_msgs.add('Соперник захватили Ваш город '+empty_city.rus_name)
 			}else{
 				sys_msg.add('У вас нет одиноких городов, повезло')	
 			}
@@ -4608,16 +4685,16 @@ bot_game={
 				if (city.price<opp_data.money){
 					
 					common.buy(2,city)
-					sys_msg.add('Соперник купил город по акции: '+city.rus_name)
+					game_msgs.add('Соперник купил город по акции: '+city.rus_name)
 					return				
 				}				
 			}
 			
-			sys_msg.add('Соперник не смог купить город по акции!')
+			game_msgs.add('Соперник не смог купить город по акции!')
 		}
 		if (result===5){
 			common.opp_no_rent_bonus=3
-			sys_msg.add('Соперник не платит ренту 3 хода!')
+			game_msgs.add('Соперник не платит ренту 3 хода!')
 		}
 		
 	}
@@ -4649,7 +4726,7 @@ common={
 
 		objects.cells_cont.visible=true
 
-		
+		objects.bcg.texture=assets.lobby_bcg
 		
 		//бонусы не платить ренту
 		this.my_no_rent_bonus=0
@@ -4667,6 +4744,9 @@ common={
 		objects.my_card_name.set2(my_data.name,160)
 		
 		this.on=1
+		
+		dice.set_random()
+		game_msgs.activate()
 		
 		//начальный баланс
 		this.set_money(1,1000)
@@ -4695,8 +4775,6 @@ common={
 				cell_obj.bcg.height=74
 				cell_obj.city_name.tint=0xffffff
 			}
-
-
 
 			if (cell.type==='city'){
 				cell_obj.price.text=cell.price+'$'
@@ -4942,12 +5020,12 @@ common={
 				if (cell.owner===1){
 					//оппонент приземлился на мой участок
 					if (this.opp_no_rent_bonus){
-						sys_msg.add('Соперник не платит ренту')
+						game_msgs.add('Соперник не платит ренту')
 						sound.play('norent')
 					}else{
 						this.change_money(cur_player,-cell.rent[cell.level])
 						this.change_money(opp_player,+cell.rent[cell.level])
-						sys_msg.add(`Получите ренту: ${cell.rent[cell.level]}$`)
+						game_msgs.add(`Получите ренту: ${cell.rent[cell.level]}$`)
 						sound.play('rent')
 					}
 
@@ -4961,7 +5039,7 @@ common={
 					}else{
 						this.change_money(cur_player,-cell.rent[cell.level])
 						this.change_money(opp_player,+cell.rent[cell.level])
-						sys_msg.add(`Чужой город! Заплатите ренту: ${cell.rent[cell.level]}$`)
+						game_msgs.add(`Чужой город! Заплатите ренту: ${cell.rent[cell.level]}$`)
 						sound.play('rent')
 					}
 				}
@@ -5052,25 +5130,25 @@ common={
 		}
 
 		if (move_data.type==='casino_decline'){
-			sys_msg.add('Соперник отказался от казино...')
+			game_msgs.add('Соперник отказался от казино...')
 		}
 
 		if (move_data.type==='casino_result'){
 			
 			
 			if (move_data.result===0){
-				sys_msg.add('Соперник выиграл 300 $')
+				game_msgs.add('Соперник выиграл 300 $ в казино')
 				common.change_money(2,300)
 			}
 			if (move_data.result===1){
-				sys_msg.add('Соперник проиграл 300 $')
+				game_msgs.add('Соперник проиграл 300 $ в казино')
 				common.change_money(2,-300)
 			}
 			if (move_data.result===2){
 				if (move_data.city_id){
 					const empty_city=cells_data[move_data.city_id]
 					common.remove_empty_city(empty_city)				
-					sys_msg.add('Соперник потреял город '+empty_city?.rus_name)
+					game_msgs.add('Соперник потреял город '+empty_city?.rus_name)
 					
 				}else{
 					sys_msg.add('Соперник чуть не потерял город')
@@ -5081,7 +5159,7 @@ common={
 				if (move_data.city_id){
 					const empty_city=cells_data[move_data.city_id]
 					common.capture_empty_city(empty_city)
-					sys_msg.add('Соперник захватил Ваш город '+empty_city?.rus_name)					
+					game_msgs.add('Соперник захватил Ваш город '+empty_city?.rus_name)					
 					
 				}else{
 					sys_msg.add('Соперник не смог захватить Ваш город')
@@ -5105,7 +5183,7 @@ common={
 			if (move_data.id===-1)
 				this.opp_activated_plan(move_data)
 			else
-				sys_msg.add('Соперник доработал план!')
+				game_msgs.add('Соперник доработал план!')
 		}
 
 		if (move_data.type==='exch_decline'){
@@ -5119,7 +5197,7 @@ common={
 	},
 
 	opp_activated_plan(data){
-		//активация бонуса
+		//активация плана
 
 		if (data.id===0){
 
@@ -5133,22 +5211,22 @@ common={
 			const city_cell=cells_data[data.city_id]
 			const city_name=city_cell.rus_name
 			common.capture_empty_city(city_cell)
-			sys_msg.add('Соперник реализовал план и захватил Ваш город ('+city_name+')')
+			game_msgs.add('Соперник реализовал план и захватил Ваш город ('+city_name+')')
 		}
 
 		if (data.id===1){
-			common.set_money(1,1)
-			sys_msg.add('Соперник достигли цели БАНКРОТ')
+			common.set_money(1,-300)
+			game_msgs.add('Соперник достигли цели КРАЖА')
 		}
 
 		if (data.id===2){
 			common.change_money(2,2000)
-			sys_msg.add('Соперник достигли цели Наследство')
+			game_msgs.add('Соперник достигл цели Наследство')
 		}
 
 		if (data.id===100){
 			common.change_money(2,100)
-			sys_msg.add('Соперник забрал 100 $ вместо достижения цели')
+			game_msgs.add('Соперник забрал 100 $ вместо достижения цели')
 		}
 
 	},
@@ -5272,7 +5350,7 @@ common={
 				for (let city of country){
 					const cell_spr=objects.cells[city.id]
 					anim3.add(cell_spr.hl,{alpha:[0, 1,'ease2back']}, true, 2);
-				}				
+				}
 			}
 			
 		
@@ -5298,9 +5376,9 @@ common={
 			//если не от аукциона
 			if(!prc){
 				if (player===2)
-					sys_msg.add('Соперник купил '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+					game_msgs.add('Соперник купил '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 				else
-					sys_msg.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+					game_msgs.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 			}
 
 
@@ -5313,9 +5391,9 @@ common={
 		if (cell.type==='city'){
 
 			if (player===2)
-				sys_msg.add('Соперник продал '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+				game_msgs.add('Соперник продал '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 			else
-				sys_msg.add('Вы продали '+['','','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
+				game_msgs.add('Вы продали '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 
 			sound.play('sell')
 
@@ -6155,14 +6233,6 @@ lobby={
 		invite_available=invite_available || lobby._opp_data.uid==='bot';
 		invite_available=invite_available && lobby._opp_data.rating >= 50 && my_data.rating >= 50;
 
-		//на моей карточке показываем стастику
-		if(lobby._opp_data.uid===my_data.uid){
-			objects.invite_my_stat.text=[`Рейтинг: ${my_data.rating}\nИгры: ${my_data.games}`,`Rating: ${my_data.rating}\nGames: ${my_data.games}`][LANG]
-			objects.invite_my_stat.visible=true;
-		}else{
-			objects.invite_my_stat.visible=false;
-		}
-
 		//кнопка удаления комментариев
 		objects.fb_delete_button.visible=my_data.uid===lobby._opp_data.uid;
 
@@ -6917,8 +6987,8 @@ main_loader={
 		const loader=new PIXI.Loader();
 
 		//добавляем текстуры стикеров
-		//for (var i=0;i<16;i++)
-		//	loader.add('sticker_texture_'+i, git_src+'stickers/'+i+'.png');
+		for (var i=0;i<16;i++)
+			loader.add('sticker_texture_'+i, git_src+'stickers/'+i+'.png');
 
 		//добавляем из основного листа загрузки
 		const load_list=eval(assets.main_load_list);
@@ -6934,32 +7004,34 @@ main_loader={
 		//добавляем библиотеку аватаров
 		loader.add('multiavatar', 'https://akukamil.github.io/common/multiavatar.min.txt');
 
-		loader.add('sell',git_src+'sounds/sell.mp3');
-		loader.add('buy',git_src+'sounds/buy.mp3');
-		loader.add('rent',git_src+'sounds/rent.mp3');
-		loader.add('click',git_src+'sounds/click.mp3');
-		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3');
-		loader.add('auc_change',git_src+'sounds/auc_change.mp3');
-		loader.add('achivement',git_src+'sounds/achivement.mp3');
-		loader.add('can_buy_any_city',git_src+'sounds/can_buy_any_city.mp3');
-		loader.add('casino_m_300',git_src+'sounds/casino_m_300.mp3');
-		loader.add('money',git_src+'sounds/money.mp3');
-		loader.add('capture_city',git_src+'sounds/capture_city.mp3');
-		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3');
-		loader.add('city_lost',git_src+'sounds/city_lost.mp3');
-		loader.add('dice',git_src+'sounds/dice.mp3');
-		loader.add('chip_go',git_src+'sounds/chip_go.mp3');
-		loader.add('monopoly',git_src+'sounds/monopoly.mp3');
-		loader.add('auc',git_src+'sounds/auc.mp3');
-		loader.add('plans_popup',git_src+'sounds/plans_popup.mp3');
-		loader.add('plans_click',git_src+'sounds/plans_click.mp3');
-		loader.add('city_dlg',git_src+'sounds/city_dlg.mp3');
-		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3');
-		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3');
-		loader.add('casino',git_src+'sounds/casino.mp3');
-		loader.add('decline',git_src+'sounds/decline.mp3');
-		loader.add('lost300',git_src+'sounds/lost300.mp3');
-		loader.add('norent',git_src+'sounds/norent.mp3');
+		loader.add('sell',git_src+'sounds/sell.mp3')
+		loader.add('buy',git_src+'sounds/buy.mp3')
+		loader.add('rent',git_src+'sounds/rent.mp3')
+		loader.add('click',git_src+'sounds/click.mp3')
+		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3')
+		loader.add('auc_change',git_src+'sounds/auc_change.mp3')
+		loader.add('achivement',git_src+'sounds/achivement.mp3')
+		loader.add('can_buy_any_city',git_src+'sounds/can_buy_any_city.mp3')
+		loader.add('casino_m_300',git_src+'sounds/casino_m_300.mp3')
+		loader.add('money',git_src+'sounds/money.mp3')
+		loader.add('capture_city',git_src+'sounds/capture_city.mp3')
+		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3')
+		loader.add('city_lost',git_src+'sounds/city_lost.mp3')
+		loader.add('dice',git_src+'sounds/dice.mp3')
+		loader.add('chip_go',git_src+'sounds/chip_go.mp3')
+		loader.add('monopoly',git_src+'sounds/monopoly.mp3')
+		loader.add('auc',git_src+'sounds/auc.mp3')
+		loader.add('plans_popup',git_src+'sounds/plans_popup.mp3')
+		loader.add('plans_click',git_src+'sounds/plans_click.mp3')
+		loader.add('city_dlg',git_src+'sounds/city_dlg.mp3')
+		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3')
+		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3')
+		loader.add('casino',git_src+'sounds/casino.mp3')
+		loader.add('decline',git_src+'sounds/decline.mp3')
+		loader.add('lost300',git_src+'sounds/lost300.mp3')
+		loader.add('norent',git_src+'sounds/norent.mp3')
+		loader.add('receive_sticker',git_src+'sounds/receive_sticker.mp3')
+		loader.add('online_message',git_src+'sounds/online_message.mp3')
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
