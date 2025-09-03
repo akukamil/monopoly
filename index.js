@@ -2935,7 +2935,7 @@ big_msg = {
 
 		objects.big_msg_fb_btn.visible = (!my_data.blocked)&&params.fb&&my_data.games>=200
 
-		anim3.add(objects.big_msg_cont,{y:[-180,objects.big_msg_cont.sy,'easeOutBack']}, true, 0.6);
+		anim3.add(objects.big_msg_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
 
 		this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
 
@@ -2994,7 +2994,7 @@ big_msg = {
 
 		sound.play('click');
 
-		anim3.add(objects.big_msg_cont,{y:[objects.big_msg_cont.sy,450,'easeInBack']}, false, 0.4);
+		anim3.add(objects.big_msg_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5)
 		this.p_resolve("close");
 	}
 
@@ -3929,7 +3929,7 @@ plans={
 
 		this.action_made=0
 		anim3.add(objects.plans_cont,{alpha:[0, 1,'linear'],scale_xy:[0.8,1,'linear']}, true, 0.2);
-		objects.plans_cont.visible=true
+		objects.plans_get100_btn.alpha=1
 		this.update()
 		sound.play('plans_popup')
 
@@ -3937,7 +3937,7 @@ plans={
 
 	close_btn_down(){
 
-		sound.play('click')
+		//sound.play('click')
 		anim3.add(objects.plans_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5);
 
 	},
@@ -4039,10 +4039,13 @@ plans={
 			sys_msg.add('Вы уже сделали выбор')
 			return
 		}
+		
 		this.action_made=1
+		objects.plans_get100_btn.alpha=0.5
 		common.change_money(1,100)
 		game_msgs.add('Вы получили 100 $')
 		opponent.send({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
+		setTimeout(()=>{this.close_btn_down()},300)
 	}
 
 }
@@ -4518,6 +4521,17 @@ bot_game={
 
 	},
 	
+	stop_btn_down(){
+		
+		if (anim3.any_on()) {
+			sound.play('decline')
+			return
+		}
+		
+		common.stop('my_stop')
+		
+	},
+	
 	async stop(res){
 	
 		this.on=0;
@@ -4756,7 +4770,7 @@ common={
 		anim3.add(objects.board_bcg,{alpha:[0,1,'linear']}, true, 0.3);
 
 		//показываем и заполняем мою карточку
-		anim3.add(objects.my_card_cont,{y:[-200,objects.my_card_cont.sy,'linear'],alpha:[0,1,'linear']}, true, 0.3)
+		anim3.add(objects.my_card_cont,{x:[-200,objects.my_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
 		objects.my_card_rating.text=my_data.rating;
 		objects.my_card_name.set2(my_data.name,160)
 		
@@ -4769,10 +4783,12 @@ common={
 		this.set_money(1,1000)
 		this.set_money(2,1000)
 		
+		sound.play('game_start')
+		
 		objects.my_avatar.texture=players_cache.players[my_data.uid].texture
 
 		//показываем и заполняем карточку соперника
-		anim3.add(objects.opp_card_cont,{y:[-200,objects.opp_card_cont.sy,'linear'],alpha:[0,1,'linear']}, true, 0.3)
+		anim3.add(objects.opp_card_cont,{x:[800,objects.opp_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
 		objects.opp_card_name.set2(opp_data.name,160);
 		objects.opp_card_rating.text=opp_data.rating;
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;
@@ -5152,7 +5168,6 @@ common={
 
 		if (move_data.type==='casino_result'){
 			
-			
 			if (move_data.result===0){
 				game_msgs.add('Соперник выиграл 300 $ в казино')
 				common.change_money(2,300)
@@ -5166,11 +5181,9 @@ common={
 					const empty_city=cells_data[move_data.city_id]
 					common.remove_empty_city(empty_city)				
 					game_msgs.add('Соперник потреял город '+empty_city?.rus_name)
-					
 				}else{
-					sys_msg.add('Соперник чуть не потерял город')
+					game_msgs.add('Соперник чуть не потерял город в казино')
 				}
-
 			}
 			if (move_data.result===3){
 				if (move_data.city_id){
@@ -5197,10 +5210,7 @@ common={
 		}
 
 		if (move_data.type==='plan'){
-			if (move_data.id===-1)
-				this.opp_activated_plan(move_data)
-			else
-				game_msgs.add('Соперник доработал план!')
+			this.opp_activated_plan(move_data)
 		}
 
 		if (move_data.type==='exch_decline'){
@@ -5216,15 +5226,11 @@ common={
 	opp_activated_plan(data){
 		//активация плана
 
+		if (data.id===-1)
+			game_msgs.add('Соперник доработал план!')
+		
 		if (data.id===0){
 
-			/*const my_cities=cells_data.filter(d=>{return d.owner===1&&d.level===1})
-			my_cities.forEach(c=>{
-				c.owner=0
-				c.level=0
-				common.update_view(c)
-			})*/
-			
 			const city_cell=cells_data[data.city_id]
 			const city_name=city_cell.rus_name
 			common.capture_empty_city(city_cell)
@@ -5447,7 +5453,7 @@ common={
 	async stop(res){
 		
 		this.on=0
-		
+				
 		await opponent.stop(res)
 		
 		objects.opp_card_cont.visible=false
@@ -7049,6 +7055,9 @@ main_loader={
 		loader.add('norent',git_src+'sounds/norent.mp3')
 		loader.add('receive_sticker',git_src+'sounds/receive_sticker.mp3')
 		loader.add('online_message',git_src+'sounds/online_message.mp3')
+		loader.add('lose',git_src+'sounds/lose.mp3')
+		loader.add('win',git_src+'sounds/win.mp3')
+		loader.add('game_start',git_src+'sounds/game_start.mp3')
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
