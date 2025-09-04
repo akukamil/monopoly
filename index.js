@@ -1580,7 +1580,7 @@ stickers={
 
 		if (res === 'forced') return;
 
-		anim3.add(objects.sent_sticker_area,{alpha:[0.8, 0,'linear']}, false, 0.5);
+		//anim3.add(objects.sent_sticker_area,{alpha:[0.8, 0,'linear']}, false, 0.5);
 	},
 
 	async receive(id) {
