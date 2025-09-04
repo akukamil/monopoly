@@ -837,7 +837,7 @@ req_dialog={
 	async show(msg) {
 
 		//если нет в кэше то загружаем из фб
-		const uid=msg.sender
+		const uid=msg.s
 		await players_cache.update(uid);
 		await players_cache.update_avatar(uid);
 
@@ -868,7 +868,7 @@ req_dialog={
 
 		anim3.add(objects.req_cont,{y:[objects.req_cont.sy, -260,'easeInBack']}, false, 0.5);
 
-		fbs.ref('inbox/'+req_dialog._opp_data.uid).set({sender:my_data.uid,m:"REJECT",tm:Date.now()});
+		fbs.ref('inbox/'+req_dialog._opp_data.uid).push({s:my_data.uid,m:"REJECT",tm:Date.now()});
 	},
 
 	accept() {
@@ -887,7 +887,7 @@ req_dialog={
 		//отправляем информацию о согласии играть с идентификатором игры и сидом
 		game_id=irnd(1,9999);
 		const seed = irnd(1,9999);
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,m:'ACCEPT',tm:Date.now(),game_id,seed});
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'ACCEPT',tm:Date.now(),game_id,seed});
 
 		main_menu.close();
 		lobby.close();
@@ -1019,7 +1019,7 @@ chat={
 	async block_player(uid){
 
 		fbs.ref('blocked/'+uid).set(Date.now());
-		fbs.ref('inbox/'+uid).set({m:'CHAT_BLOCK',tm:Date.now()});
+		fbs.ref('inbox/'+uid).push({m:'CHAT_BLOCK',tm:Date.now()});
 
 		//увеличиваем количество блокировок
 		fbs.ref('players/'+uid+'/block_num').transaction(val=> {return (val || 0) + 1});
@@ -1097,7 +1097,7 @@ chat={
 		}
 
 		if (this.kill_next_click){
-			fbs.ref('inbox/'+player_data.uid).set({m:'CLIEND_ID',tm:Date.now(),client_id:999999});
+			fbs.ref('inbox/'+player_data.uid).push({m:'CLIEND_ID',tm:Date.now(),client_id:999999});
 			console.log('Игрок убит: ',player_data.uid);
 			this.kill_next_click=0;
 		}
@@ -1269,7 +1269,7 @@ chat={
 		if (msg) {
 			const index=irnd(1,999);
 			my_ws.safe_send({cmd:'push',path:'chat',val:{uid:my_data.uid,name:my_data.name,msg,tm:'TMS'}})
-			//fbs.ref(chat_path+'/'+index).set({uid:my_data.uid,name:my_data.name,msg, tm:firebase.database.ServerValue.TIMESTAMP,index});
+			//fbs.ref(chat_path+'/'+index).push({uid:my_data.uid,name:my_data.name,msg, tm:firebase.database.ServerValue.TIMESTAMP,index});
 		}
 
 	},
@@ -1323,15 +1323,15 @@ process_new_message = function(msg) {
 		return;
 
 	//принимаем только положительный ответ от соответствующего соперника и начинаем игру
-	if (msg.m==='ACCEPT'  && pending_player===msg.sender && state !== "p") {
+	if (msg.m==='ACCEPT'  && pending_player===msg.s && state !== "p") {
 		//в данном случае я мастер и хожу вторым
-		opp_data.uid=msg.sender;
-		game_id=msg.game_id;
-		lobby.accepted_invite(msg);
+		opp_data.uid=msg.s
+		game_id=msg.game_id
+		lobby.accepted_invite(msg)
 	}
 
 	//принимаем также отрицательный ответ от соответствующего соперника
-	if (msg.m==='REJECT'  && pending_player === msg.sender) {
+	if (msg.m==='REJECT'  && pending_player === msg.s) {
 		lobby.rejected_invite();
 	}
 
@@ -1345,7 +1345,7 @@ process_new_message = function(msg) {
 	if (state==='p') {
 
 		//учитываем только сообщения от соперника
-		if (msg.sender===opp_data.uid) {
+		if (msg.s===opp_data.uid) {
 
 			//получение отказа от игры
 			if (msg.m==='REFUSE')
@@ -1356,25 +1356,17 @@ process_new_message = function(msg) {
 				confirm_dialog.opponent_confirm_play(1);
 
 			//получение стикера
-			if (msg.m==='MSG')
+			if (msg.m==='STCR')
 				stickers.receive(msg.data);
-
-			//подтверждение начала игры
-			if (msg.m==='CONF_START')
-				online_game.opp_conf_play=1;
 
 			//получение сообщение с сдаче
 			if (msg.m==='END')
 				common.stop('opp_giveup');
-
-			//получение сообщение с ходом игорка
-			if (msg.m==='MOVE')
-				common.process_opp_move(msg);
-
-			if (msg.type==='auc_bid'||msg.type==='auc_buy'||msg.type==='auc_dec'||msg.type==='auc_dec2'||msg.type==='auc_giveup')
+			
+			if (['auc_bid','auc_buy','auc_dec','auc_dec2','auc_giveup'].includes(msg.type))
 				auc.opp_bid(msg);
 
-			if (['exch','plan','exch_decline','exch_approve','buy','sell','casino_accept','casino_decline','casino_result'].includes(msg.type))
+			if (['exch','plan','exch_decline','exch_approve','buy','sell','fin','roll','casino_accept','casino_decline','casino_result'].includes(msg.type))
 				common.process_opp_move(msg);
 
 			//получение сообщение с ходом игорка
@@ -1396,8 +1388,8 @@ process_new_message = function(msg) {
 
 		if (msg.m==='INV_REM') {
 			//запрос игры обновляет данные оппонента поэтому отказ обрабатываем только от актуального запроса
-			if (msg.sender === req_dialog._opp_data.uid)
-				req_dialog.hide(msg.sender);
+			if (msg.s === req_dialog._opp_data.uid)
+				req_dialog.hide(msg.s);
 		}
 
 	}
@@ -1566,7 +1558,6 @@ stickers={
 
 	},
 
-
 	async send(id) {
 
 		if (objects.stickers_cont.ready===false)
@@ -1577,10 +1568,9 @@ stickers={
 
 		this.hide_panel();
 
-		fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,message:"MSG",tm:Date.now(),data:id});
-		objects.sent_sticker_area.texture=assets['sticker_texture_'+id];
-
-		await anim3.add(objects.sent_sticker_area,{alpha:[0, 0.8,'linear']}, true, 0.5);
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'STCR',tm:Date.now(),data:id});
+		
+		sys_msg.add('Вы отправили стикер!')
 
 		const res = await new Promise((resolve, reject) => {
 				stickers.promise_resolve_send = resolve;
@@ -1618,146 +1608,6 @@ stickers={
 
 	}
 
-}
-
-fin_dialog={
-
-	resolver:0,
-
-	show(result){
-
-		anim3.add(objects.fin_dlg_cont,{y:[objects.fin_dlg_cont.sy+30,objects.fin_dlg_cont.sy,'linear'],alpha:[0,1,'linear']},true, 0.3);
-
-		const res_data={
-			me_black_potted:{type:LOSE,t2:['Вы забили черный шар! Этого нельзя сейчас делать!','You potted black ball in wrong time!'][LANG]},
-			opp_black_potted:{type:WIN,t2:['Соперник забил черный шар! Этого нельзя делать сейчас!','Opponent potted black ball in wrong time!'][LANG]},
-			me_black_potted_wrong:{type:LOSE,t2:['Вы забили черный шар, но начали с чужого!',"You lost! You potted the black ball but started with an opponent's ball!"][LANG]},
-			opp_black_potted_wrong:{type:WIN,t2:['Соперник забил черный шар, но начал с чужого!','You win! Opponent potted black ball but started with wrong ball'][LANG]},
-			me_win:{type:WIN,t2:['Вы забили все шары своей группы и черный шар по всем правилам!',"You potted all your group’s balls and the black ball by the rules!"][LANG]},
-			opp_win:{type:LOSE,t2:['Соперник забил все шары своей группы и черный шар по всем правилам!',"Your opponent potted all their group’s balls and the black ball by the rules!"][LANG]},
-			my_no_connection:{type:LOSE,t2:['Пропала интернет связь!','Connection is lost!'][LANG]},
-			my_timeout:{type:LOSE,t2:['У вас закончилось время на ход!','You have run out of time'][LANG]},
-			opp_timeout:{type:WIN,t2:['У соперника закончилось время на ход!','The opponent has run out of time to move!'][LANG]},
-			timer_error:{type:LOSE,t2:['Ошибка таймера!','Timer error!'][LANG]},
-			my_giveup:{type:LOSE,t2:['Вы сдались!','You gave up!'][LANG]},
-			opp_giveup:{type:WIN,t2:['Соперник сдался!','The opponent has surrendered!'][LANG]},
-			no_opp_conf:{type:NOSYNC,t2:['Похоже соперник не смог начать игру!',"Looks like the opponent couldn't start the game!"][LANG]},
-		}[result];
-
-
-		//главные заголовок
-		const t1={'1':['Победа!','You won!'][LANG],'-1':['Поражение!','You lost!'][LANG],'2':'---!'}[res_data.type];
-
-
-
-		//определяем новый рейтинг
-		const old_rating=my_data.rating;
-		if (res_data.type===WIN) my_data.rating=my_data.win_rating;
-		if (res_data.type===LOSE) my_data.rating=my_data.lose_rating;
-		if (res_data.type===DRAW) my_data.rating=my_data.draw_rating;
-
-
-		//если выиграли в онлайн игре
-		if (opponent===online_game){
-			my_data.games++;
-			fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating);
-			fbs.ref('players/'+my_data.uid+'/games').set(my_data.games);
-		}
-
-		let tar_x=0;
-		switch(res_data.type){
-
-			case WIN:
-				objects.fin_dlg_crown.visible=true;
-				objects.fin_dlg_orb1.visible=true;
-				objects.fin_dlg_orb2.visible=true;
-				tar_x=objects.fin_dlg_avatar1.x+objects.fin_dlg_avatar1.w*0.5;
-				objects.fin_dlg_crown.x=tar_x;
-				objects.fin_dlg_orb1.x=tar_x;
-				objects.fin_dlg_orb2.x=tar_x;
-				sound.play('win2');
-			break;
-
-			case LOSE:
-				objects.fin_dlg_crown.visible=true;
-				objects.fin_dlg_orb1.visible=true;
-				objects.fin_dlg_orb2.visible=true;
-				tar_x=objects.fin_dlg_avatar2.x+objects.fin_dlg_avatar2.w*0.5;
-				objects.fin_dlg_crown.x=tar_x;
-				objects.fin_dlg_orb1.x=tar_x;
-				objects.fin_dlg_orb2.x=tar_x;
-				sound.play('lose');
-			break;
-
-			default:
-				objects.fin_dlg_crown.visible=false;
-				objects.fin_dlg_orb1.visible=false;
-				objects.fin_dlg_orb2.visible=false;
-				sound.play('lose');
-			break;
-
-		}
-
-
-		//заполняем имя
-		objects.fin_dlg_name1.text=my_data.name;
-		objects.fin_dlg_name2.text=opp_data.name;
-
-		objects.fin_dlg_avatar1.set_texture(players_cache.players[my_data.uid].texture);
-		objects.fin_dlg_avatar2.set_texture(players_cache.players[opp_data.uid].texture);
-
-		//заполняем данные с результатами игры
-		objects.fin_dlg_title1.text=t1;
-		objects.fin_dlg_title2.text=res_data.t2;
-
-		objects.fin_dlg_rating1.text=old_rating+' >>> '+my_data.rating;
-
-		const opp_new_rating=opp_data.rating+(old_rating-my_data.rating)
-		objects.fin_dlg_rating2.text=opp_data.rating+' >>> '+opp_new_rating;
-
-		some_process.fin_dlg_anim=function(){fin_dialog.winner_anim()};
-
-		return new Promise(res=>{fin_dialog.resolver=res});
-
-	},
-
-	close(){
-
-		some_process.fin_dlg_anim=function(){};
-		objects.fin_dlg_cont.visible=false;
-		this.resolver();
-
-	},
-
-	fb_down(){
-
-		this.close();
-
-	},
-
-	ok_down(){
-
-		this.close();
-
-	},
-
-	winner_anim(){
-		const p=1;
-		objects.fin_dlg_orb1.alpha=Math.abs(Math.sin(game_tick));
-		objects.fin_dlg_orb2.alpha=Math.abs(Math.cos(game_tick));
-
-		//objects.fin_dlg_orb1.rotation+=0.01;
-		//objects.fin_dlg_orb2.rotation+=0.02;
-		if (objects.fin_dlg_orb1.alpha<0.02) {
-			objects.fin_dlg_orb1.angle=irnd(0,360);
-			objects.fin_dlg_orb1.tint=(Math.random()*0.1+0.9)*0xffffff;
-		}
-		if (objects.fin_dlg_orb2.alpha<0.02){
-			objects.fin_dlg_orb2.angle=irnd(0,360);
-			objects.fin_dlg_orb2.tint=(Math.random()*0.1+0.9)*0xffffff;
-		}
-
-	}
 }
 
 function resize() {
@@ -1808,7 +1658,7 @@ confirm_dialog = {
 
 		objects.confirm_msg.text=msg;
 
-		anim3.add(objects.confirm_cont,{y:[450,objects.confirm_cont.sy,'easeOutBack']}, true, 0.6);
+		anim3.add(objects.confirm_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
 
 		return new Promise(function(resolve, reject){
 			confirm_dialog.p_resolve = resolve;
@@ -1830,9 +1680,7 @@ confirm_dialog = {
 	},
 
 	close () {
-
-		anim3.add(objects.confirm_cont,{y:[objects.confirm_cont.sy,450,'easeInBack']}, false, 0.4);
-
+		anim3.add(objects.confirm_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5);
 	}
 
 }
@@ -2206,96 +2054,100 @@ auth2={
 
 timer={
 
-	on:0,
-	time_for_move:30,
-	move_time_start:0,
-	prv_time:0,
-	cur_bar:0,
+	t:0,
+	prv_tm:0,
+	sec_left:0,
 
-	start(turn_on){
-		//return
-		//включаем и проверяем
-		if (turn_on) this.on=1;
-		if (!this.on) return
+	start({sec=30} = {}){
 
-		//сам таймер
-		some_process.time=function(){timer.tick()};
-
-		//время когда пошел отсчет хода
-		this.prv_time=this.move_time_start=Date.now();
-
-		this.disconnect_time=0;
-
-		//положение таймера
-		if (my_turn){
-			objects.my_timer_bar.scale_x=1;
-			objects.my_timer_bar.width=210;
-			objects.my_timer_bar.visible=true;
-			objects.opp_timer_bar.visible=false;
-			this.cur_bar=objects.my_timer_bar;
-		} else {
-			objects.opp_timer_bar.scale_x=1;
-			objects.opp_timer_bar.width=210;
-			objects.my_timer_bar.visible=false;
-			objects.opp_timer_bar.visible=true;
-			this.cur_bar=objects.opp_timer_bar;
+		if (opponent===bot_game){
+			this.just_place()
+			return
 		}
 
+		clearInterval(this.t)
+		this.t=setInterval(()=>this.tick(),1000)
+		this.sec_left=sec
+		this.prv_tm=Date.now()
+		objects.timer_text.tint=objects.timer_text.base_tint
+		this.update_text()
+		this.just_place()
 
+	},
+		
+	pause(){
+		
+		clearInterval(this.t)
+		
+	},
+		
+	resume(){
+		
+		this.prv_tm=Date.now()
+		this.t=setInterval(()=>this.tick(),1000)
+		
+	},
+
+	just_place(){
+
+		objects.timer_cont.visible=true
+
+		if (my_turn)
+			objects.timer_cont.x=objects.my_card_cont.sx+objects.my_avatar.x+objects.my_avatar.width*0.5
+		else
+			objects.timer_cont.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5
+
+	},
+
+	update_text(){
+
+		objects.timer_text.text=(this.sec_left>9?'0:':'0:0')+Math.abs(this.sec_left)
 
 	},
 
 	stop(){
 
-		//сам таймер
-		some_process.time=function(){};
+		clearInterval(this.t)
 
 	},
 
 	tick(){
 
-		//проверка таймера
-		const cur_time=Date.now();
-		//console.log(cur_time-this.prv_time);
-		if (cur_time-this.prv_time>5000||cur_time<this.prv_time){
-
-			//online_game.finish_event('timer_error');
-			//return;
+		const tm=Date.now()
+		if (tm-this.prv_tm>5000||tm<this.prv_tm){
+			common.stop('timer_error');
 		}
-		this.prv_time=cur_time;
+		this.prv_tm=tm
 
-		//проверка соединения
-		if (!connected) {
-			this.disconnect_time++;
-			if (this.disconnect_time>5) {
-				online_game.finish_event('my_no_connection');
-				return;
-			}
-		}
-
-		//определяем сколько времени прошло
-		const move_time_left=this.time_for_move-(cur_time-this.move_time_start)*0.001;
-
-		if (move_time_left < 0 && my_turn)	{
-			online_game.finish_event('my_timeout');
-			return;
-		}
-
-		if (move_time_left < -5 && !my_turn) {
-			online_game.finish_event('opp_timeout');
-			return;
-		}
-
-		if (connected === 0 && !my_turn) {
-			this.disconnect_time ++;
-			if (this.disconnect_time > 5) {
-				online_game.finish_event('my_no_connection');
-				return;
-			}
-		}
+		this.sec_left--
 
 		//обновляем текст на экране
-		this.cur_bar.width=move_time_left*7;
+		this.update_text()
+
+		//подсветка текста
+		if (this.sec_left===5) {
+			objects.timer_text.tint=0xff0000
+			sound.play('clock')
+		}		
+		
+		if (this.sec_left < 0 && my_turn)	{
+
+			if (online_game.me_conf_play)
+				common.stop('my_timeout');
+			else
+				common.stop('my_no_sync');
+
+			return;
+		}
+
+		if (this.sec_left < -5 && !my_turn) {
+
+			if (online_game.opp_conf_play === 1)
+				common.stop('opp_timeout');
+			else
+				common.stop('opp_no_sync');
+			return;
+		}
 
 	}
 
@@ -2816,6 +2668,7 @@ dice={
 	rnd2:0,
 	roll_res:'11',
 	wait_click:0,
+	roll_on:0,
 
 	activate(){
 
@@ -2837,7 +2690,11 @@ dice={
 		this.rnd1=irnd(1,6)
 		this.rnd2=irnd(1,6)
 		
+		this.roll_on=1
+		
 		sound.play('dice')
+		
+		timer.pause()
 		
 		const player=objects.white_chip===chip?1:2
 
@@ -2882,6 +2739,7 @@ dice={
 			common.move_chip(chip,this.roll_res[0]*1+this.roll_res[1]*1)
 			this.roll_timer=0
 			this.roll_timer2=0
+			this.roll_on=0
 		},2000)
 
 	},
@@ -2898,9 +2756,15 @@ dice={
 		clearInterval(this.roll_timer2)
 		this.roll_timer=0
 		this.roll_timer2=0
+		this.roll_on=0
 	},
 
 	pointerdown(){
+
+		if (anim3.any_on()) {
+			sound.play('decline')
+			return
+		}
 
 		if (this.roll_timer) return
 		if (!common.on) return
@@ -2909,12 +2773,14 @@ dice={
 		//clearInterval(this.click_timer)
 		//this.click_timer=0
 		
+		opponent.me_conf_play=1
+		
 		sound.play('click')
 
 		//objects.dice_hand.visible=false
 		this.roll_and_go(objects.white_chip);
 		//отправляем сопернику
-		fbs.ref('inbox/'+opp_data.uid).set({m:'MOVE',sender:my_data.uid,type:'roll',roll_res:this.roll_res,tm:Date.now()})
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,type:'roll',roll_res:this.roll_res,tm:Date.now()})
 
 		anim3.add(objects.roll_dice_btn,{scale_xy:[0.666,0.2,'easeInBack'],alpha:[1,0,'linear']}, false, 0.15);
 
@@ -2937,7 +2803,7 @@ big_msg = {
 
 		anim3.add(objects.big_msg_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
 
-		this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
+		//this.show_bonus_anim(objects.big_msg_energy,params.energy||0)
 
 		return new Promise(function(resolve, reject){
 			big_msg.p_resolve = resolve;
@@ -3214,7 +3080,7 @@ city_dlg={
 		common.buy(1,this.cur_cell)
 
 		//отправляем сопернику
-		opponent.send({sender:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
 
 		this.update(this.cur_cell)
 		this.close()
@@ -3243,7 +3109,7 @@ city_dlg={
 		this.update(this.cur_cell)
 
 		//отправляем сопернику
-		opponent.send({sender:my_data.uid,type:'sell',cell_id:this.cur_cell.id,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'sell',cell_id:this.cur_cell.id,tm:Date.now()})
 
 		this.close()
 	},
@@ -3280,7 +3146,12 @@ fin={
 
 	pointerdown(){
 
-		//if (!this.click_timer) return
+		if (anim3.any_on()) {
+			sound.play('decline')
+			return
+		}
+		
+		if (!common.on) return
 
 		if (my_data.money<=0){
 			sound.play('decline')
@@ -3291,18 +3162,14 @@ fin={
 
 		sound.play('click')
 
-		//останавливаем
-		//objects.fin_hand.visible=false
-		//clearInterval(this.click_timer)
-		//this.click_timer=0
-
 		//отправляем сопернику
-		opponent.send({m:'MOVE',sender:my_data.uid,type:'fin',tm:Date.now()})
-
+		opponent.send({s:my_data.uid,type:'fin',tm:Date.now()})
 
 		//теперь уже не мой ход
 		my_turn_started=0
 		my_turn=0
+		
+		timer.start()
 
 		objects.roll_dice_btn.visible=false
 		
@@ -3318,6 +3185,7 @@ auc={
 	state:'on_my_bid',
 	cur_cell:0,
 	started:0,
+	g_my_turn:0,
 
 	activate(cell,state){
 
@@ -3331,6 +3199,9 @@ auc={
 		this.cur_cell=cell
 		objects.auc_bid.text=this.cur_bid+'$'
 		objects.auc_asset_name.text=cell.rus_name
+		
+		//очередь до аукциона
+		this.g_my_turn=my_turn
 		
 		sound.play('auc')
 
@@ -3360,6 +3231,10 @@ auc={
 			anim3.add(objects.auc_bid,{scale_xy:[1, 1.5,'ease2back']}, true, 0.25);
 			objects.auc_info.text='Соперник сделал ставку! Ваш ход...'
 			this.state='on_my_bid'
+			
+			//перезапускаем ход
+			my_turn=1
+			timer.start()
 		}
 
 		//мы отказались но соперник купил
@@ -3367,6 +3242,10 @@ auc={
 			common.buy(2,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
 			game_msgs.add('Соперник выиграл на аукционе город '+this.cur_cell.rus_name)
+			
+			//перезапускаем ход, аукцион завершен
+			my_turn=this.g_my_turn
+			timer.start()
 		}
 
 		//соперник сразу отказался от аукциона, не хочет покупать или нет денег
@@ -3377,21 +3256,34 @@ auc={
 			objects.auc_make_bid_btn.texture=assets.auc_buy_btn_img
 			objects.auc_info.text='Соперник не участвует, покупаете?'
 			this.state='on_auc_dec'
+			
+			//перезапускаем ход
+			my_turn=1
+			timer.start()
 		}
 
-		//соперник тоже отказался покупать
+		//соперник тоже отказался покупать, аукцион завершен
 		if(data.type==='auc_dec2'){
 			sound.play('decline')
 			objects.auc_cont.visible=false
 			game_msgs.add('Соперник тоже отказался покупать!')
+			
+			//перезапускаем ход, аукцион завершен
+			my_turn=this.g_my_turn
+			timer.start()
 		}
 
-		//соперник отказался от аукциона, но ставка уже сделана
+		//соперник отказался от аукциона, но ставка уже сделана, сразу покупаем
 		if(data.type==='auc_giveup'){
 			common.buy(1,this.cur_cell,this.new_bid)
 			objects.auc_cont.visible=false
 			game_msgs.add('Вы выиграли аукцион! Город Ваш!')
+			
+			//перезапускаем ход, аукцион завершен
+			my_turn=this.g_my_turn
+			timer.start()
 		}
+	
 	},
 
 	change_bid(d){
@@ -3461,7 +3353,7 @@ auc={
 		//отказываемся когда соперник сразу отказался от аукциона
 		if(this.state==='on_auc_dec'){
 			sound.play('decline')
-			opponent.send({sender:my_data.uid,type:'auc_dec2',tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'auc_dec2',tm:Date.now()})
 			game_msgs.add('Вы тоже отказались от покупки!')
 			objects.auc_cont.visible=false
 		}
@@ -3469,19 +3361,26 @@ auc={
 		//отменяю сразу аукцион, соперник может купить или нет
 		if (!this.started){
 			sound.play('decline')
-			opponent.send({sender:my_data.uid,type:'auc_dec',tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'auc_dec',tm:Date.now()})
 			objects.auc_info.text='Вы отказались от аукциона. Ждем решения соперника...'
 			this.state='on_my_dec'
-
+			
+			//перезапускаем ход
+			my_turn=0
+			timer.start()
 		}
 
 		//отказываюсь, пусть соперник берет по своей цене
 		if (this.started){
 			sound.play('decline')
-			opponent.send({sender:my_data.uid,type:'auc_giveup',tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'auc_giveup',tm:Date.now()})
 			common.buy(2,this.cur_cell,this.cur_bid)
 			game_msgs.add('Вы проиграли аукцион. Город купил соперник!')
 			objects.auc_cont.visible=false
+			
+			//перезапускаем ход, аукцион завершен
+			my_turn=this.g_my_turn
+			timer.start()
 		}
 
 	},
@@ -3513,14 +3412,17 @@ auc={
 				return
 			}
 
-
 			sound.play('auc_bid')
 			this.state='on_opp_bid'
 			objects.auc_decline_btn.alpha=0.5
 			objects.auc_make_bid_btn.alpha=0.5
 
 			objects.auc_info.text='Вы сделали ставку. Ждем соперника...'
-			opponent.send({sender:my_data.uid,type:'auc_bid',bid:this.new_bid,tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'auc_bid',bid:this.new_bid,tm:Date.now()})
+			
+			//перезапускаем ход
+			my_turn=0
+			timer.start()
 		}
 
 		//соперник сразу отказался, можно купить
@@ -3531,7 +3433,11 @@ auc={
 			common.buy(1,this.cur_cell)
 
 			//отправляем сопернику - покупка по обычной цене карточки
-			opponent.send({sender:my_data.uid,type:'auc_buy',cell_id:this.cur_cell.id,tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'auc_buy',cell_id:this.cur_cell.id,tm:Date.now()})
+			
+			//перезапускаем ход, аукцион завершен
+			my_turn=this.g_my_turn
+			timer.start()
 		}
 	}
 
@@ -3566,7 +3472,7 @@ casino={
 		//objects.casino_icon2.tilePosition.y=60
 		//objects.casino_icon3.tilePosition.y=120
 
-		sys_msg.add('Выберите ставку и нажмите КРУТИТЬ')
+		sys_msg.add('Нажмите КРУТИТЬ чтобы сыграть')
 
 	},
 
@@ -3634,7 +3540,7 @@ casino={
 			sound.play('can_buy_any_city')
 			common.my_no_rent_bonus=3
 		}
-		opponent.send({sender:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
 
 		this.state='fin'
 		//objects.casino_btn1.visible=false
@@ -3654,7 +3560,7 @@ casino={
 		}
 
 		if (this.state==='ready'){
-			opponent.send({sender:my_data.uid,type:'casino_decline',tm:Date.now()})
+			opponent.send({s:my_data.uid,type:'casino_decline',tm:Date.now()})
 			game_msgs.add('Вы отказались от игры в казино')
 			this.close()
 			return
@@ -3674,7 +3580,7 @@ casino={
 			return
 		}
 
-		opponent.send({sender:my_data.uid,type:'casino_accept',tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'casino_accept',tm:Date.now()})
 
 		this.state='roll'
 		
@@ -3704,9 +3610,10 @@ exch={
 	get_city_id:0,
 	offer_balance:0,
 	state:'offer',
+	last_offer_tm:0,
 
 	activate(data){
-
+		
 		this.on=1
 		this.state='my_offer'
 
@@ -3748,10 +3655,10 @@ exch={
 
 		//получаем наоборот
 		this.send_city_id=data.g
-		this.get_city_id=data.s
+		this.get_city_id=data.sc
 
 		const send_city=cells_data[data.g]
-		const get_city=cells_data[data.s]
+		const get_city=cells_data[data.sc]
 
 		objects.exch_send_info.visible=false
 		objects.exch_send_city.visible=true
@@ -3846,8 +3753,12 @@ exch={
 	btn1_down(){
 
 		if (this.state==='opp_offer'){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_decline',tm:Date.now()})
+			fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,type:'exch_decline',tm:Date.now()})
 			game_msgs.add('Вы отклонили сделку!')
+			
+			//перезапускаем
+			my_turn=0
+			timer.start()
 		}
 
 		this.close()
@@ -3865,7 +3776,7 @@ exch={
 			common.update_view(cells_data[this.get_city_id])
 
 			//отправляем сопернику
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch_approve',tm:Date.now()})
+			fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,type:'exch_approve',tm:Date.now()})
 
 			game_msgs.add('Вы одобрили сделку сделку!')
 			this.close()
@@ -3877,13 +3788,25 @@ exch={
 				objects.exch_get_price.text='Выберите города для обмена'
 				return
 			}
+			
+			const tm=Date.now()
+			if (tm-this.last_offer_tm<60000){
+				sys_msg.add('Нужно подождать...')
+				return
+			}
 
 			this.state='wait'
 
 			objects.exch_info.text='Ждем решения соперника...'
 
 			//отправляем предложение сопернику
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,type:'exch',s:this.send_city_id,g:this.get_city_id,tm:Date.now()})
+			fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,type:'exch',sc:this.send_city_id,g:this.get_city_id,tm:Date.now()})
+			
+			this.last_offer_tm=Date.now()
+			
+			//перезапускаем
+			my_turn=0
+			timer.start()
 
 		}
 
@@ -3893,6 +3816,10 @@ exch={
 
 		this.close()
 		game_msgs.add('Соперник отклонил сделку!')
+		
+		//перезапускаем
+		my_turn=1
+		timer.start()
 	},
 
 	opp_approve(){
@@ -3908,6 +3835,11 @@ exch={
 
 		this.close()
 		game_msgs.add('Соперник одобрил сделку!')
+		
+		//перезапускаем
+		my_turn=1
+		timer.start()
+		
 	},
 
 	close(){
@@ -3987,7 +3919,7 @@ plans={
 					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
 					game_msgs.add('Вы достигли цели ВОЙНА и захватили город '+city_cell.rus_name)
 					common.capture_empty_city(city_cell)
-					opponent.send({sender:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
+					opponent.send({s:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
 				}else{
 					sys_msg.add('Данный план невозможно сейчас реализовать')
 					return
@@ -3997,13 +3929,13 @@ plans={
 			if (i===1){
 				common.set_money(2,-300)
 				game_msgs.add('Вы достигли цели КРАЖА баланс соперника -300$ )))')
-				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
+				opponent.send({s:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
 			if (i===2){
 				common.change_money(1,2000)
 				game_msgs.add('Вы достигли цели НАСЛЕДСТВО (+2000 $)')
-				opponent.send({sender:my_data.uid,type:'plan',id:i,tm:Date.now()})
+				opponent.send({s:my_data.uid,type:'plan',id:i,tm:Date.now()})
 			}
 
 
@@ -4025,7 +3957,7 @@ plans={
 		objects.plans_mask[i].width=this.plans_progress[i]
 		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
 		
-		opponent.send({sender:my_data.uid,type:'plan',id:-1,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'plan',id:-1,tm:Date.now()})
 
 		this.update()
 		
@@ -4044,7 +3976,7 @@ plans={
 		objects.plans_get100_btn.alpha=0.5
 		common.change_money(1,100)
 		game_msgs.add('Вы получили 100 $')
-		opponent.send({sender:my_data.uid,type:'plan',id:100,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'plan',id:100,tm:Date.now()})
 		setTimeout(()=>{this.close_btn_down()},300)
 	}
 
@@ -4057,32 +3989,22 @@ online_game={
 	move_time_start:0,
 	disconnect_time:0,
 	opp_conf_play:0,
-	ball_placement_seed:0,
+	me_conf_play:0,
 	write_fb_timer:0,
-	confirm_start_timer:0,
-	confirm_check_timer:0,
-	help_info_timer:0,
-	my_color:'',
-	opp_color:'',
-	opp_aiming_dir:0.001,
-	table_state:'break',
-
-	get_random(){
-
-		this.ball_placement_seed=(this.ball_placement_seed * 9301 + 49297) % 233280;
-		return this.ball_placement_seed;
-
-	},
 
 	activate(seed, turn){
 
 		this.on=1;
 
 		my_turn=turn;
-
+		
+		//запускаем таймер
+		timer.start()
+		objects.timer_cont.visible=true
 
 		//если открыты другие окна то закрываем их
-		if (objects.chat_cont.visible) chat.close();
+		if (objects.chat_cont.visible) chat.close()
+		if (bot_game.on) bot_game.clear()
 
 		//устанавливаем локальный и удаленный статус
 		set_state({state:'p'});
@@ -4119,24 +4041,15 @@ online_game={
 
 	},
 
-	check_confirm(){
-
-		//проверяем было ли подтверждение от соперника
-		if (!this.opp_conf_play) online_game.finish_event('no_opp_conf');
-
-	},
-
 	send(data){
 
 		//отправляем ход онайлн сопернику (с таймаутом)
 		clearTimeout(this.write_fb_timer);
 		this.write_fb_timer=setTimeout(function(){game.stop('my_no_connection');}, 8000);
-		fbs.ref('inbox/'+opp_data.uid).set(data).then(()=>{
+		fbs.ref('inbox/'+opp_data.uid).push(data).then(()=>{
 			clearTimeout(this.write_fb_timer);
 		});
 
-		//включаем/перезапускаем таймер
-		timer.stop();
 	},
 
 	async exit_btn_down(){
@@ -4148,7 +4061,7 @@ online_game={
 
 		let res = await confirm_dialog.show(['Сдаетесь?','Giveup?'][LANG]);
 		if (res==='ok'&&this.on){
-			fbs.ref('inbox/'+opp_data.uid).set({m:'END',sender:my_data.uid,tm:Date.now()});
+			fbs.ref('inbox/'+opp_data.uid).push({m:'END',s:my_data.uid,tm:Date.now()});
 			common.stop('my_giveup');
 		}
 
@@ -4165,7 +4078,7 @@ online_game={
 
 		//если есть данные то отправляем из сопернику
 		if (msg){
-			fbs.ref('inbox/'+opp_data.uid).set({sender:my_data.uid,m:'CHAT',tm:Date.now(),data:msg});
+			fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'CHAT',tm:Date.now(),data:msg});
 			message.add({text:msg, timeout:3000,sound_name:'online_message',sender:'me'});
 		}
 	},
@@ -4214,7 +4127,7 @@ online_game={
 		if (min_btn_id === 2)
 			this.exit_btn_down()
 		if (min_btn_id === 3)
-			exch.activate()
+			common.exch_down()
 
 	},
 
@@ -4249,18 +4162,16 @@ online_game={
 		this.on=0;
 
 		const res_array = [
-			['both_finished',DRAW, ['Ничья','Draw']],
-			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
-			['my_win',WIN , ['Вы выиграли!','You win!']],
-			['my_giveup',LOSE , ['Вы сдались!','You lose!']],
-			['opp_giveup',WIN , ['Вы выиграли! Соперник сдался!','You win!']],
-			['opp_win',WIN , ['Вы проиграли!','You lose!']],
-			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
-			['both_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['my_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['my_more_fin_after_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
-			['opp_more_fin_after_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
-			['same_fin_after_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
+			['my_win',WIN , ['Соперник банкрот!','You win!']],
+			['my_timeout',LOSE , ['Вы проиграли! У вас закончилось время','You lose! You out of time']],
+			['my_no_sync',NOSYNC , ['Похоже вы не захотели начинать игру.','It looks like you did not want to start the game']],
+			['opp_no_sync',NOSYNC , ['Похоже соперник не смог начать игру.','It looks like the opponent could not start the game']],
+			['opp_timeout',WIN , ['У соперника закончилось время','You win! Opponent out of time']],
+			['my_giveup',LOSE , ['Вы банкрот!','You lose!']],
+			['opp_giveup',WIN , ['Соперник банкрот!','You win!']],
+			['timer_error',LOSE , ['Ошибка таймера!','Timer error!']],
+			['opp_win',WIN , ['Вы банкрот!','You lose!']],
+			['draw',DRAW , ['Ничья!','You lose!']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
 
@@ -4269,7 +4180,8 @@ online_game={
 
 		//выключаем элементы
 		objects.stop_bot_btn.visible=false
-		
+		objects.timer_cont.visible=false
+				
 
 		//воспроизводим звук
 		if (result_number === DRAW || result_number === LOSE)
@@ -4279,8 +4191,11 @@ online_game={
 		
 		//scheduler.stop_all()
 		dice.stop()	
+		
+		const old_rating = my_data.rating
+		my_data.rating = this.calc_new_rating(my_data.rating, result_number)
 
-		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
+		await big_msg.show({t1:['Игра завершена','Game over'][LANG],t2:result_info, t3:`${old_rating} > ${my_data.rating}`, fb:true})
 		
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
@@ -4292,9 +4207,6 @@ online_game={
 	},
 	
 	close(){
-
-		clearTimeout(this.confirm_check_timer);
-		clearTimeout(this.confirm_start_timer);
 
 		//убираем процессинг эйминга соперника
 		some_process.opp_aiming=function(){}
@@ -4316,14 +4228,17 @@ online_game={
 bot_game={
 
 	plans_progress:[0,0,0],
-
+	on:0,
+	opp_conf_play:0,
+	me_conf_play:0,
+	
 	activate(){
-
 
 		//показываем и заполняем мою карточку
 		opp_data.uid='bot'
 		opponent=this
 		my_turn=1
+		this.on=1
 		
 		opponent=this
 		
@@ -4459,6 +4374,18 @@ bot_game={
 
 	},
 
+	clear(){
+		
+		objects.stop_bot_btn.visible=false
+		objects.auc_cont.visible=false
+		objects.cell_info_cont.visible=false
+		objects.plans_cont.visible=false
+		objects.casino_cont.visible=false
+		objects.exch_cont.visible=false
+		sys_msg.close()
+		
+	},
+
 	try_upgrade_some_city(){
 
 		for (const cell of cells_data){
@@ -4534,28 +4461,19 @@ bot_game={
 	
 	async stop(res){
 	
-		this.on=0;
+		this.on=0
 
 		const res_array = [
-			['both_finished',DRAW, ['Ничья','Draw']],
-			['my_finished_first',WIN , ['Вы выиграли!\nБыстрее соперника перевели свои шашки.','You win!\nYou finished faster than your opponent.']],
 			['my_win',WIN , ['Вы выиграли!','You win!']],
 			['opp_win',WIN , ['Вы проиграли!','You lose!']],
-			['opp_finished_first',LOSE, ['Вы проиграли!\nСоперник оказался быстрее вас.','You lose!\nOpponent was faster than you']],
-			['both_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['my_left_after_30',LOSE, ['Вы проиграли!\nНе успели вывести свои шашки за 30 ходов.','You lose!\nYou did not managed to leave house in 30 moves']],
-			['my_more_fin_after_80',WIN , ['Вы выиграли!\nПеревели больше шашек в новый дом.','You win!You have transferred more checkers to a new house.']],
-			['opp_more_fin_after_80',LOSE, ['Вы проиграли!\nСоперник перевел больше шашек в новый дом.','You lose!\nOpponent transferred more checkers to a new house']],
-			['same_fin_after_80',DRAW , ['Ничья\nОдинаковое количество шашек в новом доме','Draw!\nThe same number of transferred checkers']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
 
-		let result_number = res_array.find( p => p[0] === res)[1];
-		let result_info = res_array.find( p => p[0] === res)[2][LANG];
+		const result_number = res_array.find( p => p[0] === res)[1];
+		const result_info = res_array.find( p => p[0] === res)[2][LANG];
 
 		//выключаем элементы
-		objects.stop_bot_btn.visible=false
-		
+		objects.stop_bot_btn.visible=false		
 
 		//воспроизводим звук
 		if (result_number === DRAW || result_number === LOSE)
@@ -4566,16 +4484,9 @@ bot_game={
 		scheduler.stop_all()
 		dice.stop()	
 
-		await big_msg.show({t1:result_info, t2:')))',t3:'',fb:1})
+		await big_msg.show({t1:['Игра завершена','Game over'][LANG],t2:result_info,t3:'*** *** ***',fb:1})
 		
-		objects.auc_cont.visible=false
-		objects.cell_info_cont.visible=false
-		objects.plans_cont.visible=false
-		objects.casino_cont.visible=false
-		objects.exch_cont.visible=false
-		sys_msg.close()
-
-		
+		this.clear()
 		
 	},
 
@@ -4740,6 +4651,7 @@ common={
 	chip_sound_timer:0,
 	my_no_rent_bonus:0,
 	opp_no_rent_bonus:0,
+	move_on:0,
 
 	activate(){
 
@@ -4762,6 +4674,9 @@ common={
 		//бонусы не платить ренту
 		this.my_no_rent_bonus=0
 		this.opp_no_rent_bonus=0
+		
+		opponent.opp_conf_play=0
+		opponent.me_conf_play=0
 
 		//количество домов
 		this.houses_num=30
@@ -4987,6 +4902,8 @@ common={
 
 	async move_chip(chip, steps){
 		
+		this.move_on=1
+		
 		this.chip_sound_timer=setInterval(()=>{
 			if(!assets.chip_go.isPlaying)
 				sound.play('chip_go')
@@ -5041,7 +4958,9 @@ common={
 		const cell=cells_data[cur_cell_id]
 		const cur_player=chip===objects.white_chip?1:2
 		const opp_player=3-cur_player
-
+		
+		this.move_on=0
+		timer.resume()
 		clearInterval(this.chip_sound_timer)
 
 		//расчет ренты за участок соперника
@@ -5139,6 +5058,17 @@ common={
 	},
 
 	process_opp_move(move_data){
+		console.log(move_data)
+		
+		//ход получен значит соперник подтвердил
+		opponent.opp_conf_play=1
+		
+		//ждем завершения прежде чем обрабатывать ход
+		if (this.move_on||dice.roll_on){
+			console.log('в очереди ',move_data)
+			setTimeout(()=>{this.process_opp_move(move_data)},250)
+			return;
+		}
 
 		if (move_data.type==='roll'){
 			dice.roll_and_go(objects.yellow_chip,move_data.roll_res)
@@ -5260,6 +5190,7 @@ common={
 		anim3.add(objects.roll_dice_btn,{scale_xy:[0.3, 0.666,'easeOutBack']}, true, 0.25);
 		objects.roll_dice_btn.tint=objects.roll_dice_btn.base_tint
 		my_turn=1
+		timer.start()
 	},
 	
 	get_empty_cities(player){
@@ -5453,8 +5384,13 @@ common={
 	async stop(res){
 		
 		this.on=0
+		timer.stop()
 				
 		await opponent.stop(res)
+		
+
+		//обновляем почтовый ящик
+		fbs.ref('inbox/'+my_data.uid).remove()
 		
 		objects.opp_card_cont.visible=false
 		objects.my_card_cont.visible=false
@@ -6510,7 +6446,7 @@ lobby={
 
 		//отправляем сообщение что мы уже не заинтересованы в игре
 		if (pending_player!=='') {
-			fbs.ref("inbox/"+pending_player).set({sender:my_data.uid,m:"INV_REM",tm:Date.now()});
+			fbs.ref("inbox/"+pending_player).push({s:my_data.uid,m:"INV_REM",tm:Date.now()});
 			pending_player='';
 		}
 
@@ -6539,7 +6475,7 @@ lobby={
 		} else {
 			sound.play('click');
 			objects.invite_button.texture=assets.invite_wait_img;
-			fbs.ref('inbox/'+lobby._opp_data.uid).set({sender:my_data.uid,m:'INV',tm:Date.now()});
+			fbs.ref('inbox/'+lobby._opp_data.uid).push({s:my_data.uid,m:'INV',tm:Date.now()});
 			pending_player=lobby._opp_data.uid;
 
 		}
@@ -6908,7 +6844,6 @@ players_cache={
 keep_alive = function() {
 
 	fbs.ref('players/'+my_data.uid+'/tm').set(firebase.database.ServerValue.TIMESTAMP);
-	fbs.ref('inbox/'+my_data.uid).onDisconnect().remove();
 	fbs.ref(room_name+"/"+my_data.uid).onDisconnect().remove();
 
 	set_state({});
@@ -7010,7 +6945,7 @@ main_loader={
 		const loader=new PIXI.Loader();
 
 		//добавляем текстуры стикеров
-		for (var i=0;i<16;i++)
+		for (var i=0;i<12;i++)
 			loader.add('sticker_texture_'+i, git_src+'stickers/'+i+'.png');
 
 		//добавляем из основного листа загрузки
@@ -7404,10 +7339,10 @@ async function init_game_env(lang) {
 	anim3.add(objects.id_rating,{alpha:[0,1,'linear']}, true, 0.55);
 
 	//обновляем почтовый ящик
-	fbs.ref('inbox/'+my_data.uid).set({sender:'-',m:'-',tm:'-',data:9});
+	fbs.ref('inbox/'+my_data.uid).remove()
 
 	//подписываемся на новые сообщения
-	fbs.ref('inbox/'+my_data.uid).on('value', data=>{process_new_message(data.val())});
+	fbs.ref('inbox/'+my_data.uid).on('child_added', data=>{process_new_message(data.val())});
 
 	//обновляем данные в файербейс так как могли поменяться имя или фото
 	fbs.ref('players/'+my_data.uid).set({
@@ -7447,10 +7382,9 @@ async function init_game_env(lang) {
 	set_state({state:'o'});
 
 	//сообщение для дубликатов
-	fbs.ref('inbox/'+my_data.uid).set({m:'CLIEND_ID',tm:Date.now(),client_id});
+	fbs.ref('inbox/'+my_data.uid).push({m:'CLIEND_ID',tm:Date.now(),client_id});
 
 	//отключение от игры и удаление не нужного
-	fbs.ref('inbox/'+my_data.uid).onDisconnect().remove();
 	fbs.ref(room_name+'/'+my_data.uid).onDisconnect().remove();
 
 	//keep-alive сервис
