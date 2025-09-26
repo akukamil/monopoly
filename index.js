@@ -3495,7 +3495,7 @@ casino={
 		}
 		if (result===5){
 			game_msgs.add('Вы не платите ренту 3 хода!')
-			sound.play('can_buy_any_city')
+			sound.play('norent')
 			common.my_no_rent_bonus=3
 		}
 		opponent.send({s:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
@@ -7257,7 +7257,7 @@ async function init_game_env(lang) {
 	setTimeout(function(){anim3.add(objects.id_cont,{y:[objects.id_cont.sy, -300,'linear'],x:[objects.id_cont.sx,1200,'linear'],angle:[0,200,'linear']}, false, 0.4)},500);
 
 	//это разные события
-	//document.addEventListener("visibilitychange", function(){tabvis.change()});
+	document.addEventListener("visibilitychange", function(){tabvis.change()});
 	window.addEventListener('wheel', (event) => {
 		//lobby.wheel_event(Math.sign(event.deltaY));
 		chat.wheel_event(Math.sign(event.deltaY));
