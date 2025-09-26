@@ -6852,6 +6852,7 @@ main_loader={
 		loader.add('online_message',git_src+'sounds/online_message.mp3')
 		loader.add('lose',git_src+'sounds/lose.mp3')
 		loader.add('win',git_src+'sounds/win.mp3')
+		loader.add('game_start',git_src+'sounds/game_start.mp3')
 		loader.add('opp_exch_offer',git_src+'sounds/opp_exch_offer.mp3')
 		loader.add('exch_accepted',git_src+'sounds/exch_accepted.mp3')
 		loader.add('exch_decline',git_src+'sounds/exch_decline.mp3')
