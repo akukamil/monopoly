@@ -1623,7 +1623,7 @@ stickers={
 
 		objects.rec_sticker_area.texture=assets['sticker_texture_'+id];
 
-		await anim3.add(objects.rec_sticker_area,{x:[400,objects.rec_sticker_area.sx,'easeOutBack'],y:[50,objects.rec_sticker_area.sy,'easeOutBack'],alpha:[0, 0.8,'linear']}, true, 0.5);
+		await anim3.add(objects.rec_sticker_area,{x:[700,objects.rec_sticker_area.sx,'easeOutBack'],y:[50,objects.rec_sticker_area.sy,'easeOutBack'],alpha:[0, 0.8,'linear']}, true, 0.5);
 
 		const res = await new Promise((resolve, reject) => {
 				stickers.promise_resolve_recive = resolve;
@@ -3138,7 +3138,7 @@ auc={
 		this.started=0
 
 		anim3.add(objects.auc_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
-		objects.auc_make_bid_btn.texture=assets.auc_make_bid_btn
+		//objects.auc_make_bid_btn.texture=assets.auc_make_bid_btn
 
 		this.new_bid=this.cur_bid=cell.price
 		this.cur_cell=cell
