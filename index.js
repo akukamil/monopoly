@@ -4576,6 +4576,7 @@ bot_game={
 		}
 		if (result===5){
 			common.opp_no_rent_bonus=3
+			sound.play('norent')
 			game_msgs.add('Соперник не платит ренту 3 хода!')
 		}
 		
