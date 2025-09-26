@@ -5337,8 +5337,9 @@ common={
 			this.change_money(player,price)
 
 			//обновляем всю страну так как там тоже могло поменяться
-
 			this.update_view(cell)
+			
+			timer.start()
 
 		}
 	},
