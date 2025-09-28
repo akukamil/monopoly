@@ -3166,6 +3166,9 @@ fin={
 		my_turn_started=0
 		my_turn=0
 		
+		//сброс платного казино
+		common.pay_casino_played=0
+		
 		timer.start()
 
 		objects.roll_dice_btn.visible=false
@@ -3462,11 +3465,13 @@ casino={
 	state:'',
 	roll_sound_timer:0,
 	roll_rimer:0, 
+	pay_to_play:0,
 
-	activate(){
+	activate(pay_to_play){
 
 		sound.play('casino')
 		this.state='ready'
+		this.pay_to_play=pay_to_play
 		this.bid=Math.min(100,my_data.money)
 		//objects.casino_bid.text=this.bid+' $'
 		
@@ -3479,7 +3484,7 @@ casino={
 
 		objects.casino_btn2.x=200
 		objects.casino_btn2.alpha=1
-		objects.casino_btn2.texture=assets.casino_btn2
+		objects.casino_btn2.texture=pay_to_play?assets.casino_spin_btn2:assets.casino_btn2
 
 		objects.casino_icon.tilePosition.y=0
 		//objects.casino_icon2.tilePosition.y=60
@@ -3597,7 +3602,17 @@ casino={
 			return
 		}
 
-		opponent.send({s:my_data.uid,type:'casino_accept',tm:Date.now()})
+		//платный вариант
+		if(this.pay_to_play){
+			if (my_data.money<250){
+				sys_msg.add('Недостаточно денег!')
+				return
+			}
+			common.pay_casino_played=1
+			common.change_money(1,-250)
+		}
+
+		opponent.send({s:my_data.uid,type:'casino_accept',pay_to_play:this.pay_to_play,tm:Date.now()})
 
 		this.state='roll'
 		
@@ -4646,6 +4661,7 @@ common={
 	my_no_rent_bonus:0,
 	opp_no_rent_bonus:0,
 	move_on:0,
+	pay_casino_played:0,
 
 	activate(){
 
@@ -4738,11 +4754,12 @@ common={
 			}
 
 			if (cell.type==='casino'){
+				cell_obj.interactive=true
+				cell_obj.buttonMode=true
+				cell_obj.pointerdown=function(){common.cell_down(i)}
 				cell_obj.bcg.texture=assets.big_cell_casino_bcg
 				cell_obj.price.visible=false
 				cell_obj.city_name.visible=false
-				cell_obj.interactive=false
-				cell_obj.buttonMode=false
 				cell_obj.auc_icon.visible=false
 				cell_obj.icon.visible=false
 			}
@@ -4788,20 +4805,24 @@ common={
 
 		const cell=cells_data[id]
 
-		//если открыта торговля то переносим в торговлю не улучшеные города
-		if (exch.on){
-			exch.cell_down(cell)
-			return
-		}
-		
 		//выбор сервисных клеток
-		if (cell.type!=='city'){
-			sys_msg.add('Эта клетка не доступна!')
-			return
+		if (cell.type==='city'){
+			
+			//если открыта торговля то переносим в торговлю не улучшеные города
+			if (exch.on)
+				exch.cell_down(cell)
+			else
+				city_dlg.show(cell)
 		}
 
-		//показываем меню города
-		city_dlg.show(cell)
+		//выбор сервисных клеток
+		if (cell.type==='casino'){
+			if (this.pay_casino_played)
+				sys_msg.add('Вы уже сыграли в казино!')
+			else
+				casino.activate(1)
+		}
+
 	},
 
 	exch_down(){
@@ -4923,7 +4944,6 @@ common={
 			anim3.add(opp_chip,{x:[cx, tx,'linear'],y:[cy, ty,'linear']}, true, 0.15);
 		}
 
-
 		const player=objects.white_chip===chip?1:2
 		for (let i=0;i<steps;i++){
 
@@ -5040,7 +5060,7 @@ common={
 		if (cur_cell_id===0){
 			this.show_done_btn()
 		}
-			
+
 		//казино
 		if (cell.type==='casino'){
 			if(cur_player===1)
@@ -5099,6 +5119,8 @@ common={
 
 		if (move_data.type==='casino_accept'){
 			sys_msg.add('Соперник играет в казино...')
+			if(move_data.pay_to_play)
+				common.change_money(2,-250)
 		}
 
 		if (move_data.type==='casino_decline'){
