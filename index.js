@@ -4604,7 +4604,6 @@ bot_game={
 				const empty_city=empty_cities.find(city=>city.price<opp_data.money)
 				if (empty_city&&empty_city.price<my_data.money){
 					common.rebuy(2,empty_city)
-					game_msgs.add('Соперник выкупил Ваш город '+empty_city.rus_name)
 				}else{
 					game_msgs.add('Соперник не смог выкупить город')
 				}
