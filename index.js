@@ -2965,7 +2965,7 @@ city_dlg={
 
 	},
 
-	buy_btn_down(){
+	buy_btn_down(any_city_bonus){
 
 		const check_buy_res=this.check_buy()
 
@@ -2990,10 +2990,10 @@ city_dlg={
 			return
 		}
 
-		common.buy(1,this.cur_cell)
+		common.buy(1,this.cur_cell,0,any_city_bonus)
 
 		//отправляем сопернику
-		opponent.send({s:my_data.uid,type:'buy',cell_id:this.cur_cell.id,tm:Date.now()})
+		opponent.send({s:my_data.uid,type:'buy',cell_id:this.cur_cell.id,b:any_city_bonus?1:0,tm:Date.now()})
 
 		this.update(this.cur_cell)
 		this.close()
