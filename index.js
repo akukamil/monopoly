@@ -3405,7 +3405,7 @@ casino={
 
 		sound.play('casino')
 		this.state='ready'
-		this.pay_to_play=pay_to_play
+		this.pay_to_play=pay_to_play||0
 		this.bid=Math.min(100,my_data.money)
 		//objects.casino_bid.text=this.bid+' $'
 		
