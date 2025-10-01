@@ -3,7 +3,7 @@ var app, assets={},fbs,SERVER_TM, game_name='monopoly', yndx_payments, game, cli
 
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
-const cells_data=[{id:0,type:"start"},{id:1,type:"city",rus_name:"Канпур",eng_name:"Kanpur",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:2,type:"city",rus_name:"Сурат",eng_name:"Surat",country:1,price:50,house_cost:50,auc:1,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:3,type:"city",rus_name:"Дели",eng_name:"Deli",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:4,type:"city",rus_name:"Уфа",eng_name:"Ufa",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:5,type:"city",rus_name:"Казань",eng_name:"Kazan",country:2,price:75,house_cost:75,auc:1,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:6,type:"city",rus_name:"Москва",eng_name:"Moscow",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:7,type:"?"},{id:8,type:"city",rus_name:"Холон",eng_name:"Holon",country:3,price:100,house_cost:100,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:9,type:"city",rus_name:"Ашдод",eng_name:"Ashdod",country:3,price:100,house_cost:100,auc:1,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:10,type:"city",rus_name:"София",eng_name:"Sofia",country:4,price:125,house_cost:125,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:11,type:"city",rus_name:"Варна",eng_name:"Varna",country:4,price:125,house_cost:125,auc:1,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:12,type:"casino"},{id:13,type:"city",rus_name:"Рим",eng_name:"Rim",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:14,type:"city",rus_name:"Милан",eng_name:"Milan",country:5,price:150,house_cost:150,auc:1,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:15,type:"city",rus_name:"Турин",eng_name:"Turin",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:16,type:"city",rus_name:"Лондон",eng_name:"London",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:17,type:"city",rus_name:"Глазго",eng_name:"Glazgo",country:6,price:200,house_cost:200,auc:1,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:18,type:"city",rus_name:"Плимут",eng_name:"Plimut",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:19,type:"?"},{id:20,type:"city",rus_name:"Париж",eng_name:"Paris",country:7,price:250,house_cost:250,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:21,type:"city",rus_name:"Лион",eng_name:"Lyon",country:7,price:250,house_cost:250,auc:1,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:22,type:"city",rus_name:"Даллас",eng_name:"Dallas",country:8,price:300,house_cost:300,rent:[0,72,138,413,964,1171,1377],owner:0,level:0},{id:23,type:"city",rus_name:"Чикаго",eng_name:"Chicago",country:8,price:300,house_cost:300,auc:1,rent:[0,72,138,413,964,1171,1377],owner:0,level:0}]
+const cells_data=[{id:0,type:"start"},{id:1,type:"city",rus_name:"Канпур",eng_name:"Kanpur",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:2,type:"city",rus_name:"Сурат",eng_name:"Surat",country:1,price:50,house_cost:50,auc:1,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:3,type:"city",rus_name:"Дели",eng_name:"Deli",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:4,type:"city",rus_name:"Уфа",eng_name:"Ufa",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:5,type:"city",rus_name:"Казань",eng_name:"Kazan",country:2,price:75,house_cost:75,auc:1,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:6,type:"city",rus_name:"Москва",eng_name:"Moscow",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:7,type:"casino"},{id:8,type:"city",rus_name:"Холон",eng_name:"Holon",country:3,price:100,house_cost:100,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:9,type:"city",rus_name:"Ашдод",eng_name:"Ashdod",country:3,price:100,house_cost:100,auc:1,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:10,type:"city",rus_name:"София",eng_name:"Sofia",country:4,price:125,house_cost:125,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:11,type:"city",rus_name:"Варна",eng_name:"Varna",country:4,price:125,house_cost:125,auc:1,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:12,type:"casino"},{id:13,type:"city",rus_name:"Рим",eng_name:"Rim",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:14,type:"city",rus_name:"Милан",eng_name:"Milan",country:5,price:150,house_cost:150,auc:1,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:15,type:"city",rus_name:"Турин",eng_name:"Turin",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:16,type:"city",rus_name:"Лондон",eng_name:"London",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:17,type:"city",rus_name:"Глазго",eng_name:"Glazgo",country:6,price:200,house_cost:200,auc:1,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:18,type:"city",rus_name:"Плимут",eng_name:"Plimut",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:19,type:"casino"},{id:20,type:"city",rus_name:"Париж",eng_name:"Paris",country:7,price:250,house_cost:250,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:21,type:"city",rus_name:"Лион",eng_name:"Lyon",country:7,price:250,house_cost:250,auc:1,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:22,type:"city",rus_name:"Даллас",eng_name:"Dallas",country:8,price:300,house_cost:300,rent:[0,72,138,413,964,1171,1377],owner:0,level:0},{id:23,type:"city",rus_name:"Чикаго",eng_name:"Chicago",country:8,price:300,house_cost:300,auc:1,rent:[0,72,138,413,964,1171,1377],owner:0,level:0}]
 
 const chip_anchors=[
 	{dx:-1,dy:-1,ang:45},
@@ -34,89 +34,6 @@ const chip_anchors=[
 
 r2 = (v)=>{
 	return (v >= 0 || -1) * Math.round(Math.abs(v)*10000)/10000;
-}
-
-quat={
-
-	multiply( a, b ) {
-
-		let q = {};
-
-		const qax = a.x, qay = a.y, qaz = a.z, qaw = a.w;
-		const qbx = b.x, qby = b.y, qbz = b.z, qbw = b.w;
-
-		q.x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
-		q.y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
-		q.z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
-		q.w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
-
-		return q;
-	},
-
-	normalizeVector(vector) {
-	  const x = vector.x;
-	  const y = vector.y;
-	  const z = vector.z;
-
-	  const magnitude = Math.sqrt(x * x + y * y + z * z);
-
-	  if (magnitude !== 0) {
-		vector.x=x / magnitude,
-		vector.y=y / magnitude,
-		vector.z=z / magnitude
-	  } else {
-		throw new Error("Cannot normalize a zero vector.");
-	  }
-	},
-
-	vec_len2D(vec){
-
-		return Math.sqrt(vec.x * vec.x + vec.y * vec.y);
-
-	},
-
-	create(vec, ang){
-
-		this.normalizeVector(vec);
-		const q={w:0,x:0,y:0,z:0};
-		const halfAngle = ang / 2
-		const s = Math.sin(halfAngle);
-		q.x = vec.x * s;
-		q.y = vec.y * s;
-		q.z = vec.z * s;
-		q.w = Math.cos( halfAngle );
-		return q;
-	},
-
-	update(q, vec, ang){
-		this.normalizeVector(vec);
-		const halfAngle = ang / 2
-		const s = Math.sin(halfAngle);
-		q.x = vec.x * s;
-		q.y = vec.y * s;
-		q.z = vec.z * s;
-		q.w = Math.cos( halfAngle );
-	},
-
-	rotate_vec_by_quat(vec, q){
-
-		//результат вращения вектора
-		const rot_quat2={w:q.w,x:-q.x,y:-q.y,z:-q.z};
-		const qm1=this.multiply(q,vec);
-		const res=this.multiply(qm1,rot_quat2);
-		vec.x=res.x;
-		vec.y=res.y;
-		vec.z=res.z;
-
-	},
-
-	angleToZ(vec) {
-		const dotProduct = vec.z;
-		const magnitude = Math.sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
-		const angleInRadians = Math.acos(dotProduct / magnitude);
-		return angleInRadians*180/Math.PI;
-	}
-
 }
 
 irnd = function(min,max) {
@@ -543,36 +460,36 @@ class chat_record_class extends PIXI.Container {
 	}
 
 	nameToColor(name) {
-		  // Create a hash from the name
-		  let hash = 0;
-		  for (let i = 0; i < name.length; i++) {
-			hash = name.charCodeAt(i) + ((hash << 5) - hash);
-			hash = hash & hash; // Convert to 32bit integer
-		  }
+		
+		let hash = 0
+		for (let i = 0; i < name.length; i++) {
+			const char = name.charCodeAt(i);
+			hash = ((hash << 5) - hash) + char
+			hash = hash & hash
+		}
+		hash=Math.abs(hash)
 
-		  // Generate a color from the hash
-		  let color = ((hash >> 24) & 0xFF).toString(16) +
-					  ((hash >> 16) & 0xFF).toString(16) +
-					  ((hash >> 8) & 0xFF).toString(16) +
-					  (hash & 0xFF).toString(16);
+		const colors=[
+			0x262626,
+			0xFFFF00,
+			0xA9D08E,
+			0xA5B56B,
+			0xCCFF66,
+			0x00CC99,
+			0x002060,
+			0xFF9900,
+			0xFFFFFF,
+			0x404040,
+			0x33CC33,
+			0xFFCCFF,
+			0x0000FF,
+			0xC6E0B4,
+			0x0054A8,
+			0x9F9DF7,
+			0xFFF2CC
+		]		
 
-		  // Ensure the color is 6 characters long
-		  color = ('000000' + color).slice(-6);
-
-		  // Convert the hex color to an RGB value
-		  let r = parseInt(color.slice(0, 2), 16);
-		  let g = parseInt(color.slice(2, 4), 16);
-		  let b = parseInt(color.slice(4, 6), 16);
-
-		  // Ensure the color is bright enough for a black background
-		  // by normalizing the brightness.
-		  if ((r * 0.299 + g * 0.587 + b * 0.114) < 128) {
-			r = Math.min(r + 128, 255);
-			g = Math.min(g + 128, 255);
-			b = Math.min(b + 128, 255);
-		  }
-
-		  return (r << 16) + (g << 8) + b;
+		return colors[hash%colors.length]
 	}
 
 	async update_avatar(uid, tar_sprite) {
@@ -1373,12 +1290,11 @@ process_new_message = function(msg) {
 			if (msg.m==='END')
 				common.stop('opp_giveup');
 			
-			if (['auc_bid','auc_buy','auc_dec','auc_dec2','auc_giveup'].includes(msg.type))
-				auc.opp_bid(msg);
-
 			if (['exch','plan','exch_decline','exch_approve','buy','sell','rebuy','fin','roll','casino_accept','casino_decline','casino_result'].includes(msg.type))
-				common.process_opp_move(msg);
-
+				common.process_opp_move(msg)
+			
+			if (['auc_bid','auc_buy','auc_dec','auc_dec2','auc_giveup'].includes(msg.type))
+				auc.opp_bid(msg)																  
 			//получение сообщение с ходом игорка
 			if (msg.m==='CHAT')
 				online_game.chat(msg.data);
@@ -2911,6 +2827,7 @@ city_dlg={
 
 		//основные параметры
 		objects.cell_info_title.text=cell.rus_name														 
+
 		objects.cell_info_params.text='Только город\nГород и 1 дом\nГород и 2 дома\nГород и 3 дома\nГород и 4 дома\nГород и отель'
 		objects.cell_info_prices.text='$ '+cell.rent[1]+'\n$ '+cell.rent[2]+'\n$ '+cell.rent[3]+'\n$ '+cell.rent[4]+'\n$ '+cell.rent[5]+'\n$ '+cell.rent[6]
 		objects.cell_info_params.y=155
@@ -2935,8 +2852,11 @@ city_dlg={
 		
 		let type=''
 		
-		if (!cell.owner&&(me_on_cell||common.buy_any_city_bonus))
+		if (!cell.owner&&me_on_cell)
 			type='ONLY_BUY'
+		
+		if (!cell.owner&&!me_on_cell&&common.buy_any_city_bonus)
+			type='ONLY_BUY_BONUS'
 		
 		if (cell.owner===1&&[1,2,3,4,5].includes(cell.level))
 			type='SELL_OR_BUY'
@@ -2946,9 +2866,7 @@ city_dlg={
 		
 		if (cell.owner===2&&common.buy_opp_city_bonus&&max_level_1)
 			type='REBUY'
-	
-	
-		
+			
 		//покупка просто города
 		if (type==='ONLY_BUY'){
 			
@@ -2961,6 +2879,18 @@ city_dlg={
 			btn2.pointerdown=function(){city_dlg.buy_btn_down()}
 		}
 		
+		//покупка просто города
+		if (type==='ONLY_BUY_BONUS'){
+			
+			btn1.visible=false
+			btn1_t.visible=false
+			
+			btn2.visible=true
+			btn2_t.visible=true
+			btn2_t.text=`КУПИТЬ ГОРОД\n-$${cell.price}`
+			btn2.pointerdown=function(){city_dlg.buy_btn_down(1)}
+		}
+		
 		//перекуп просто города
 		if (type==='REBUY'){
 			
@@ -2971,6 +2901,7 @@ city_dlg={
 			btn2_t.visible=true
 			btn2_t.text=`ВЫКУПИТЬ\n-$${cell.price}`
 			btn2.pointerdown=function(){city_dlg.rebuy_btn_down()}
+		 
 		}
 		
 		//продажа оттеля
@@ -2997,16 +2928,19 @@ city_dlg={
 			btn2.pointerdown=function(){city_dlg.buy_btn_down()}
 
 			if (cell.level===1){
+									  
 				btn1_t.text=`ПРОДАТЬ ГОРОД\n+${Math.round(cell.price*0.5)}$`
 				btn2_t.text=`КУПИТЬ ДОМ\n-${Math.round(cell.house_cost)}$`
 			}
 
 			if ([2,3,4].includes(cell.level)){
+									  
 				btn1_t.text=`ПРОДАТЬ ДОМ\n+${Math.round(cell.house_cost*0.5)}$`
 				btn2_t.text=`КУПИТЬ ДОМ\n-${Math.round(cell.house_cost)}$`
 			}
 
 			if (cell.level===5){
+									  
 				btn1_t.text=`ПРОДАТЬ ДОМ\n+${Math.round(cell.house_cost*0.5)}$`
 				btn2_t.text=`КУПИТЬ ОТЕЛЬ\n-${Math.round(cell.house_cost)}$`
 			}
@@ -3539,14 +3473,14 @@ casino={
 
 		}
 		if (result===3){
-			game_msgs.add('Вы можете купить город соперника!')
+			game_msgs.add('Вы можете выкупить пустой город соперника!')
 			sound.play('can_buy_any_city')
-			common.buy_opp_city_bonus=1
+			common.add_bonus('buy_opp_city_bonus',1)
 		}
 		if (result===4){
 			game_msgs.add('Вы можете купить любой город!')
 			sound.play('can_buy_any_city')
-			common.buy_any_city_bonus=1
+			common.add_bonus('buy_any_city_bonus',1)
 		}
 		if (result===5){
 			game_msgs.add('Вы не платите ренту 3 хода!')
@@ -3554,13 +3488,7 @@ casino={
 			common.my_no_rent_bonus=3
 		}
 		opponent.send({s:my_data.uid,type:'casino_result',result,city_id,tm:Date.now()})
-
-		this.state='fin'
-		//objects.casino_btn1.visible=false
-		//objects.casino_btn2.x=120
-		//objects.casino_btn2.alpha=1
-		//objects.casino_btn2.texture=assets.casino_exit_btn_img
-		
+		this.state='fin'	
 		setTimeout(()=>{this.close()},1000)
 
 	},
@@ -3576,7 +3504,6 @@ casino={
 
 	btn1_down(){
 
-
 		if (this.state==='roll'){
 			return
 		}
@@ -3587,8 +3514,6 @@ casino={
 			this.close()
 			return
 		}
-
-		objects.casino_info.text='недоступно'
 
 	},
 
@@ -4227,6 +4152,7 @@ online_game={
 			['my_giveup',LOSE , ['Вы банкрот!','You lose!']],
 			['opp_giveup',WIN , ['Соперник банкрот!','You win!']],
 			['timer_error',LOSE , ['Ошибка таймера!','Timer error!']],
+			['my_no_connection',LOSE , ['Потеря связи!','Connection error!']],																	
 			['opp_win',WIN , ['Вы банкрот!','You lose!']],
 			['draw',DRAW , ['Ничья!','You lose!']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
@@ -4250,6 +4176,12 @@ online_game={
 		
 		const old_rating = my_data.rating
 		my_data.rating = this.calc_new_rating(my_data.rating, result_number)
+		//записываем рейтинг в базу
+		fbs.ref('players/'+my_data.uid+'/rating').set(my_data.rating)
+
+		//увеличиваем количество игр
+		my_data.games++;
+		fbs.ref('players/'+my_data.uid+'/games').set(my_data.games)
 
 		await big_msg.show({t1:['Игра завершена','Game over'][LANG],t2:result_info, t3:`${old_rating} > ${my_data.rating}`, fb:true})
 		
@@ -4313,6 +4245,8 @@ bot_game={
 		
 		game_msgs.add('Игра против бота началась, ваш ход...')
 
+		//устанавливаем локальный и удаленный статус
+		set_state ({state : 'b'})
 	},
 
 	send(data){
@@ -4543,11 +4477,11 @@ bot_game={
 		}
 
 		//казино
-		if (cell.type==='casino'){
-			
-			this.play_casino()
-			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
-			scheduler.add(()=>{common.opp_fin_move_event()},2000)
+		if (cell.type==='casino'){			
+			common.process_opp_move({type:'casino_accept'})
+			scheduler.add(()=>{this.play_casino()},2000)
+			scheduler.add(()=>{this.try_upgrade_some_city()},3000)
+			scheduler.add(()=>{common.opp_fin_move_event()},3500)
 		}
 
 		//цели
@@ -4584,14 +4518,14 @@ bot_game={
 
 	},
 	
-	play_casino(tar_result){
-		
-		common.process_opp_move({type:'casino_accept'})
+	play_casino(tar_result){		
 		
 		const result=tar_result||irnd(0,5)
 		let city_id=0
 		
+		//результат				
 		if (result===0){
+			sound.play('win300')
 			game_msgs.add('Соперник выиграл 300 $ в казино')
 			common.change_money(2,300)
 		}
@@ -4622,9 +4556,8 @@ bot_game={
 				}else{
 					game_msgs.add('Соперник не смог выкупить город')
 				}
-					
 			}else{
-				game_msgs.add('У вас нет одиноких городов, повезло')	
+				game_msgs.add('У вас нет одиноких городов, повезло)')
 			}
 		}
 		if (result===4){
@@ -4632,13 +4565,12 @@ bot_game={
 			const free_cities=cells_data.filter(c=>c.owner===0)
 			for (let city of free_cities){
 				if (city.price<opp_data.money){
-					
+					game_msgs.add('Соперник выиграл покупку любого города')
 					common.buy(2,city)
-					game_msgs.add('Соперник купил город по акции: '+city.rus_name)
-					return				
-				}				
+					sound.play('bonus')
+					return
+				}
 			}
-			
 			game_msgs.add('Соперник не смог купить город по акции!')
 		}
 		if (result===5){
@@ -4646,7 +4578,7 @@ bot_game={
 			sound.play('norent')
 			game_msgs.add('Соперник не платит ренту 3 хода!')
 		}
-		
+
 	}
 
 }
@@ -4667,8 +4599,6 @@ common={
 
 		if (my_turn){
 			this.opp_fin_move_event()
-			objects.roll_dice_btn.visible=true
-			objects.roll_dice_btn.scale_xy=0.666
 			objects.end_turn_btn.visible=false
 		}else{
 			objects.roll_dice_btn.visible=false
@@ -4680,7 +4610,7 @@ common={
 
 		objects.cells_cont.visible=true
 
-		objects.bcg.texture=assets.main_bcg
+		//objects.bcg.texture=assets.main_bcg
 		
 		//бонусы не платить ренту
 		this.my_no_rent_bonus=0
@@ -4699,6 +4629,7 @@ common={
 		anim3.add(objects.my_card_cont,{x:[-200,objects.my_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
 		objects.my_card_rating.text=my_data.rating;
 		objects.my_card_name.set2(my_data.name,160)
+		objects.my_shop_cart.visible=false
 		
 		this.on=1
 		
@@ -4715,10 +4646,32 @@ common={
 
 		//показываем и заполняем карточку соперника
 		anim3.add(objects.opp_card_cont,{x:[800,objects.opp_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
-		objects.opp_card_name.set2(opp_data.name,160);
-		objects.opp_card_rating.text=opp_data.rating;
-		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture;
+		objects.opp_card_name.set2(opp_data.name,160)
+		objects.opp_card_rating.text=opp_data.rating
+		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture
+		objects.opp_shop_cart.visible=false
 		this.prepare_cells()
+	},
+	
+	add_bonus(bonus,player){
+	
+		this[bonus]=1
+		
+		if (player===1)
+			objects.my_shop_cart.visible=true
+		else
+			objects.opp_shop_cart.visible=true
+	},
+	
+	consume_bonus(bonus,player){
+		
+		this[bonus]=0
+		
+		if (player===1){
+			objects.my_shop_cart.visible=(this.buy_any_city_bonus||this.buy_any_city_bonus)?true:false
+		}else
+			objects.opp_shop_cart.visible=(opp_data.buy_any_city_bonus||opp_data.buy_any_city_bonus)?true:false
+		
 	},
 	
 	prepare_cells(){
@@ -5089,7 +5042,7 @@ common={
 		
 		//ждем завершения прежде чем обрабатывать ход
 		if (this.move_on||dice.roll_on){
-			console.log('в очереди ',move_data)
+			//console.log('в очереди ',move_data)
 			setTimeout(()=>{this.process_opp_move(move_data)},250)
 			return;
 		}
@@ -5100,7 +5053,7 @@ common={
 
 		if (move_data.type==='buy'){
 			const cell=cells_data[move_data.cell_id]
-			this.buy(2,cell)
+			this.buy(2,cell,0,move_data.b)
 		}
 		
 		if (move_data.type==='rebuy'){
@@ -5148,9 +5101,11 @@ common={
 			}
 			if (move_data.result===3){
 				sys_msg.add('Соперник может выкупить пустой город')
+				this.add_bonus('buy_opp_city_bonus',2)
 			}
 			if (move_data.result===4){
 				sys_msg.add('Соперник может купить любой город')
+				this.add_bonus('buy_any_city_bonus',2) 
 			}
 			if (move_data.result===5){
 				sys_msg.add('Соперник не платит ренту 3 хода!')
@@ -5251,6 +5206,20 @@ common={
 		
 	},
 	
+	capture_empty_city(cell){
+		
+		//меняем владельца горда
+		sound.play('capture_city')
+		cell.owner=3-cell.owner
+		this.update_view(cell)		
+		
+		//проверяем монополию для звука и подстветки всей монополии
+		this.check_monopoly_and_flash(cell)
+	
+		//анимация
+		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
+	},
+	
 	change_money(player,amount){
 
 		sound.play('money')
@@ -5307,7 +5276,8 @@ common={
 		
 		cell.owner=player
 		this.change_money(player,-cell.price)
-		this.buy_opp_city_bonus=0
+		//потребляем бонус
+		this.consume_bonus('buy_opp_city_bonus',player)
 		
 		//обновляем всю страну так как там тоже могло поменяться
 		this.update_view(cell)
@@ -5324,7 +5294,7 @@ common={
 		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
 	},
 	
-	buy(player,cell,prc){
+	buy(player,cell,prc,any_city_bonus){
 
 		if (cell.type!=='city') return
 
@@ -5334,7 +5304,9 @@ common={
 		
 		cell.level++
 		
-		this.buy_any_city_bonus=0
+		//потребляем бонус
+		if (any_city_bonus)
+			this.consume_bonus('buy_any_city_bonus',player)
 		
 		//анимация
 		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
@@ -5500,7 +5472,7 @@ main_menu={
 
 		const tm=Date.now()
 		
-		if (tm-this.prv_anim_tm>2000){
+		if (tm-this.prv_anim_tm>1000){
 			
 			
 			const head_tar_ang=irnd(-15,15)
@@ -5509,8 +5481,8 @@ main_menu={
 			const head_tar_y=objects.uncle_head.sy+Math.cos(head_rand_and)*10
 			const head_tar_s=Math.random()*0.2+0.6666-0.1
 			
-			anim3.add(objects.uncle_head,{scale_xy:[objects.uncle_head.scale_xy,head_tar_s,'linear'],x:[objects.uncle_head.x, head_tar_x,'linear'],y:[objects.uncle_head.y, head_tar_y,'linear'],angle:[objects.uncle_head.angle, head_tar_ang,'linear']}, true, 0.5,false)
-			anim3.add(objects.uncle_hands,{x:[objects.uncle_hands.x, head_tar_x,'linear'],scale_x:[0.6666,0.62,'ease2back']}, true, 0.5,false)
+			anim3.add(objects.uncle_head,{scale_xy:[objects.uncle_head.scale_xy,head_tar_s,'linear'],x:[objects.uncle_head.x, head_tar_x,'linear'],y:[objects.uncle_head.y, head_tar_y,'linear'],angle:[objects.uncle_head.angle, head_tar_ang,'linear']}, true, 0.25,false)
+			anim3.add(objects.uncle_hands,{x:[objects.uncle_hands.x, head_tar_x,'linear'],scale_x:[0.6666,0.62,'ease2back']}, true, 0.25,false)
 						
 			this.prv_anim_tm=tm
 			
