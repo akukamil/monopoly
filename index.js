@@ -4518,13 +4518,15 @@ common={
 		//показываем и заполняем мою карточку
 		anim3.add(objects.my_card_cont,{x:[-200,objects.my_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
 		objects.my_card_rating.text=my_data.rating;
-		objects.my_card_name.set2(my_data.name,160)
+		objects.my_card_name.set2(my_data.name,120)
 		objects.my_shop_cart.visible=false
 		
 		this.on=1
 		
 		dice.set_random()
 		game_msgs.activate()
+		
+		this.prepare_cells()
 		
 		//начальный баланс
 		this.set_money(1,START_CAPITAL)
@@ -4537,11 +4539,11 @@ common={
 
 		//показываем и заполняем карточку соперника
 		anim3.add(objects.opp_card_cont,{x:[800,objects.opp_card_cont.sx,'linear'],alpha:[0,1,'linear']}, true, 0.3)
-		objects.opp_card_name.set2(opp_data.name,160)
+		objects.opp_card_name.set2(opp_data.name,120)
 		objects.opp_card_rating.text=opp_data.rating
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture
 		objects.opp_shop_cart.visible=false
-		this.prepare_cells()
+		
 	},
 	
 	add_bonus(bonus,player){
