@@ -1,6 +1,7 @@
 const M_WIDTH=800, M_HEIGHT=450;
 var app, assets={},fbs,SERVER_TM, game_name='monopoly', yndx_payments, game, client_id, objects={}, state='',my_role="", game_tick=0, made_moves=0, game_id=0, my_turn=0,my_turn_started=0, opponent=0,connected = 1, LANG = 0, hidden=0, h_state=0, game_platform="",git_src='./', room_name = '',pending_player='',tm={}, some_process = {}, my_data={opp_id : ''},opp_data={};
-
+const CASINO_PRICE_TO_PAY=100
+const START_CAPITAL=1000
 const WIN = 1, DRAW = 0, LOSE = -1, NOSYNC = 2;
 
 const cells_data=[{id:0,type:"start"},{id:1,type:"city",rus_name:"Канпур",eng_name:"Kanpur",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:2,type:"city",rus_name:"Сурат",eng_name:"Surat",country:1,price:50,house_cost:50,auc:1,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:3,type:"city",rus_name:"Дели",eng_name:"Deli",country:1,price:50,house_cost:50,rent:[0,5,20,60,140,170,200],owner:0,level:0},{id:4,type:"city",rus_name:"Уфа",eng_name:"Ufa",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:5,type:"city",rus_name:"Казань",eng_name:"Kazan",country:2,price:75,house_cost:75,auc:1,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:6,type:"city",rus_name:"Москва",eng_name:"Moscow",country:2,price:75,house_cost:75,rent:[0,9,32,97,227,275,324],owner:0,level:0},{id:7,type:"casino"},{id:8,type:"city",rus_name:"Холон",eng_name:"Holon",country:3,price:100,house_cost:100,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:9,type:"city",rus_name:"Ашдод",eng_name:"Ashdod",country:3,price:100,house_cost:100,auc:1,rent:[0,14,45,136,318,386,454],owner:0,level:0},{id:10,type:"city",rus_name:"София",eng_name:"Sofia",country:4,price:125,house_cost:125,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:11,type:"city",rus_name:"Варна",eng_name:"Varna",country:4,price:125,house_cost:125,auc:1,rent:[0,20,58,175,408,496,583],owner:0,level:0},{id:12,type:"casino"},{id:13,type:"city",rus_name:"Рим",eng_name:"Rim",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:14,type:"city",rus_name:"Милан",eng_name:"Milan",country:5,price:150,house_cost:150,auc:1,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:15,type:"city",rus_name:"Турин",eng_name:"Turin",country:5,price:150,house_cost:150,rent:[0,27,71,213,496,602,709],owner:0,level:0},{id:16,type:"city",rus_name:"Лондон",eng_name:"London",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:17,type:"city",rus_name:"Глазго",eng_name:"Glazgo",country:6,price:200,house_cost:200,auc:1,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:18,type:"city",rus_name:"Плимут",eng_name:"Plimut",country:6,price:200,house_cost:200,rent:[0,40,94,283,661,803,945],owner:0,level:0},{id:19,type:"casino"},{id:20,type:"city",rus_name:"Париж",eng_name:"Paris",country:7,price:250,house_cost:250,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:21,type:"city",rus_name:"Лион",eng_name:"Lyon",country:7,price:250,house_cost:250,auc:1,rent:[0,55,117,351,818,994,1169],owner:0,level:0},{id:22,type:"city",rus_name:"Даллас",eng_name:"Dallas",country:8,price:300,house_cost:300,rent:[0,72,138,413,964,1171,1377],owner:0,level:0},{id:23,type:"city",rus_name:"Чикаго",eng_name:"Chicago",country:8,price:300,house_cost:300,auc:1,rent:[0,72,138,413,964,1171,1377],owner:0,level:0}]
@@ -1149,7 +1150,7 @@ chat={
 				this.payments.purchase({ id: 'unblock'+block_num}).then(purchase => {
 					this.unblock_chat();
 				}).catch(err => {
-					message.add('Ошибка при покупке!');
+					message.add({text:'Ошибка при покупке!', timeout:5000,sender:'opp'})
 				})
 			}
 
@@ -1158,7 +1159,7 @@ chat={
 				vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'unblock'+block_num}).then(data =>{
 					this.unblock_chat();
 				}).catch((err) => {
-					message.add('Ошибка при покупке!');
+					message.add({text:'Ошибка при покупке!', timeout:5000,sender:'opp'})
 				});
 
 			};
@@ -1173,7 +1174,7 @@ chat={
 		this.recent_msg = this.recent_msg.filter(d =>cur_dt-d<60000);
 
 		if (this.recent_msg.length>3){
-			sys_msg.add('Подождите 1 минуту')
+			top_msg.add('Подождите 1 минуту')
 			return;
 		}
 
@@ -1195,7 +1196,7 @@ chat={
 		objects.chat_enter_btn.texture=assets.chat_enter_img;
 		fbs.ref('blocked/'+my_data.uid).remove();
 		my_data.blocked=0;
-		message.add('Вы разблокировали чат');
+		top_msg('Вы разблокировали чат');
 		sound.play('mini_dialog');
 	},
 
@@ -1318,6 +1319,51 @@ process_new_message = function(msg) {
 				req_dialog.hide(msg.s);
 		}
 
+	}
+
+}
+
+top_msg={
+
+	promise_resolve :0,
+
+	async add(t){
+
+		if (this.promise_resolve)
+			this.promise_resolve('forced');
+		
+
+		sound.play('popup');
+
+		//показываем сообщение
+		objects.t_top_msg.text=t;
+		const ares=anim3.add(objects.top_msg_cont,{y:[-100,objects.top_msg_cont.sy,'linear']}, true, 0.25,false)
+		if (ares===2) return
+		
+
+		//ждем
+		const res = await new Promise(resolve => {
+				top_msg.promise_resolve = resolve;
+				setTimeout(resolve,5000)
+			}
+		)
+		top_msg.promise_resolve=0
+
+		//это если насильно закрываем
+		if (res==='forced')	return
+
+		anim3.add(objects.top_msg_cont,{y:[objects.top_msg_cont.y,-100,'linear']}, false, 0.25,false)
+
+	},
+	
+	close(){
+		
+		if (this.promise_resolve) {
+			console.log('this.promise_resolve("forced")')
+			this.promise_resolve('forced');
+		}
+		objects.top_msg_cont.visible=false
+		
 	}
 
 }
@@ -2562,7 +2608,7 @@ dice={
 		}else{
 
 			//выбираем более интересные значения
-			for (let i=0;i<5;i++){
+			for (let i=0;i<2;i++){
 
 				this.rnd1=irnd(1,6)
 				this.rnd2=irnd(1,6)
@@ -3084,7 +3130,7 @@ fin={
 		
 		if (!common.on) return
 
-		if (my_data.money<=0){
+		if (my_data.money<0){
 			sound.play('decline')
 			sys_msg.add('Восстановите положительный баланс!')
 			return
@@ -3108,7 +3154,6 @@ fin={
 		objects.roll_dice_btn.visible=false
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
-		objects.plans_cont.visible=false
 		objects.exch_cont.visible=false
 		
 		anim3.add(objects.end_turn_btn,{scale_xy:[0.666,0.2,'easeInBack'],alpha:[1,0,'linear']}, false, 0.15);
@@ -3158,6 +3203,12 @@ auc={
 
 	opp_bid(data){
 		
+		//ждем завершения прежде чем обрабатывать ход
+		if (common.move_on||dice.roll_on){
+			//console.log('в очереди opp_bid ',data)
+			setTimeout(()=>{this.opp_bid(data)},250)
+			return;
+		}
 		objects.auc_decline_btn.alpha=1
 		objects.auc_make_bid_btn.alpha=1
 
@@ -3378,6 +3429,13 @@ auc={
 
 		//соперник сразу отказался, мы купили
 		if (this.state==='on_auc_dec'){
+			
+			if (this.cur_bid>my_data.money){
+				objects.auc_info.text='У Вас недостаточно денег!'
+				anim3.add(objects.auc_info,{x:[objects.auc_info.x, objects.auc_info.x+10,'shake']}, true, 0.15);
+				return
+			}
+			
 			this.state=''
 			game_msgs.add('Вы купили с аукциона') //это когда соперник отказался от аукциона
 			common.buy(1,this.cur_cell)
@@ -3450,12 +3508,12 @@ casino={
 		let city_id=0
 		
 		if (result===0){
-			sound.play('lost300')
+			sound.play('win300')
 			game_msgs.add('Вы выиграли 300 $ в казино')
 			common.change_money(1,300)
 		}
 		if (result===1){
-			sound.play('casino_m_300')
+			sound.play('lost300')
 			game_msgs.add('Вы проиграли 300 $ в казино')
 			common.change_money(1,-300)
 		}
@@ -3474,12 +3532,12 @@ casino={
 		}
 		if (result===3){
 			game_msgs.add('Вы можете выкупить пустой город соперника!')
-			sound.play('can_buy_any_city')
+			sound.play('bonus')
 			common.add_bonus('buy_opp_city_bonus',1)
 		}
 		if (result===4){
 			game_msgs.add('Вы можете купить любой город!')
-			sound.play('can_buy_any_city')
+			sound.play('bonus')
 			common.add_bonus('buy_any_city_bonus',1)
 		}
 		if (result===5){
@@ -3529,14 +3587,15 @@ casino={
 
 		//платный вариант
 		if(this.pay_to_play){
-			if (my_data.money<250){
+			if (my_data.money<CASINO_PRICE_TO_PAY){
 				sys_msg.add('Недостаточно денег!')
 				return
 			}
-			common.pay_casino_played=1
-			common.change_money(1,-250)
+			
+			common.change_money(1,-CASINO_PRICE_TO_PAY)
 		}
 
+		common.pay_casino_played=1
 		opponent.send({s:my_data.uid,type:'casino_accept',pay_to_play:this.pay_to_play,tm:Date.now()})
 
 		this.state='roll'
@@ -3839,140 +3898,6 @@ exch={
 
 }
 
-plans={
-
-	plans_progress:[0,0,0],
-	action_made:0,
-
-	activate(){
-
-		this.action_made=0
-		anim3.add(objects.plans_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
-		objects.plans_get100_btn.alpha=1
-		this.update()
-		sound.play('plans_popup')
-
-	},
-
-	close_btn_down(){
-
-		//sound.play('click')
-		anim3.add(objects.plans_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5);
-		common.show_done_btn()
-
-	},
-	
-	update(){
-
-		for (let i=0;i<3;i++){
-			objects.plans_mask[i].width=this.plans_progress[i]
-
-			if (this.plans_progress[i]===100)
-				objects.plans_btn_title[i].text='Применить'
-			else
-				objects.plans_btn_title[i].text='Доработать'
-
-			objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
-		}
-
-	},
-
-	bcg_down(e){
-
-		const mx = e.data.global.x/app.stage.scale.x
-		const my = e.data.global.y/app.stage.scale.y
-
-		if (my>250||my<200) return
-
-		let i=0
-		if (mx>220&&mx<340) i=0
-		if (mx>340&&mx<460) i=1
-		if (mx>460&&mx<580) i=2
-
-		if (this.action_made){
-			sys_msg.add('Вы уже сделали выбор')
-			return
-		}
-
-		setTimeout(()=>{this.close_btn_down()},300)
-		
-		//активация бонуса
-		if (this.plans_progress[i]===100){
-
-			if (i===0){
-				//захват одинокого города
-				const empty_cities=common.get_empty_cities(2)
-				if(empty_cities.length){
-					
-					const city_cell=empty_cities[irnd(0,empty_cities.length-1)]
-					game_msgs.add('Вы достигли цели ВОЙНА и захватили город '+city_cell.rus_name)
-					common.capture_empty_city(city_cell)
-					opponent.send({s:my_data.uid,type:'plan',id:i,city_id:city_cell.id,tm:Date.now()})
-				}else{
-					sys_msg.add('Данный план невозможно сейчас реализовать')
-					return
-				}
-			}
-
-			if (i===1){
-				common.set_money(2,-300)
-				game_msgs.add('Вы достигли цели КРАЖА баланс соперника -300$ )))')
-				opponent.send({s:my_data.uid,type:'plan',id:i,tm:Date.now()})
-			}
-
-			if (i===2){
-				common.change_money(1,2000)
-				game_msgs.add('Вы достигли цели НАСЛЕДСТВО (+2000 $)')
-				opponent.send({s:my_data.uid,type:'plan',id:i,tm:Date.now()})
-			}
-
-
-			sound.play('achivement')
-			this.plans_progress[i]=0
-			this.update()
-			this.action_made=1
-			return
-		}
-		if (my_data.money<50){
-			sys_msg.add('Недостаточно денег для улучшения!')
-			sound.play('decline')
-			return
-		}
-		
-		sound.play('plans_click')
-		this.action_made=1
-		common.change_money(1,-50)
-		this.plans_progress[i]+=25
-		this.plans_progress[i]=Math.min(this.plans_progress[i],100)
-		
-		game_msgs.add('Вы доработали план '+['ВОЙНА','КРАЖА','НАСЛЕДСТВО'][i])
-
-		objects.plans_mask[i].width=this.plans_progress[i]
-		objects.plans_ready_info[i].text=this.plans_progress[i]+'%'
-		
-		opponent.send({s:my_data.uid,type:'plan',id:-1,tm:Date.now()})
-
-		this.update()	
-
-	},
-
-	get100_btn_down(){
-
-		if (this.action_made){
-			sys_msg.add('Вы уже сделали выбор')
-			return
-		}
-		
-		this.action_made=1
-		objects.plans_get100_btn.alpha=0.5
-		common.change_money(1,100)
-		game_msgs.add('Вы получили 100 $')
-		opponent.send({s:my_data.uid,type:'plan',id:100,tm:Date.now()})
-		setTimeout(()=>{this.close_btn_down()},300)
-	}
-
-}
-
 online_game={
 
 	on:0,
@@ -4144,16 +4069,16 @@ online_game={
 		this.on=0;
 
 		const res_array = [
-			['my_win',WIN , ['Соперник банкрот!','You win!']],
-			['my_timeout',LOSE , ['Вы проиграли! У вас закончилось время','You lose! You out of time']],
+			['opp_giveup',WIN , ['Соперник банкрот!','You win!']],
+			['my_giveup',LOSE , ['Вы банкрот!','You lose!']],
+			['my_win',WIN , ['Вы выиграли! Ваш капитал больше чем у соперника на более 2000$','You win!']],
+			['opp_win',LOSE , ['Вы проиграли! Ваш капитал меншье чем у соперника на более 2000$','You lose!']],
+			['my_timeout',LOSE , ['Вы проиграли! Разница капиталов более 2000$','You lose! You lose']],
 			['my_no_sync',NOSYNC , ['Похоже вы не захотели начинать игру.','It looks like you did not want to start the game']],
 			['opp_no_sync',NOSYNC , ['Похоже соперник не смог начать игру.','It looks like the opponent could not start the game']],
 			['opp_timeout',WIN , ['У соперника закончилось время','You win! Opponent out of time']],
-			['my_giveup',LOSE , ['Вы банкрот!','You lose!']],
-			['opp_giveup',WIN , ['Соперник банкрот!','You win!']],
 			['timer_error',LOSE , ['Ошибка таймера!','Timer error!']],
 			['my_no_connection',LOSE , ['Потеря связи!','Connection error!']],																	
-			['opp_win',WIN , ['Вы банкрот!','You lose!']],
 			['draw',DRAW , ['Ничья!','You lose!']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
@@ -4187,7 +4112,6 @@ online_game={
 		
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
-		objects.plans_cont.visible=false
 		objects.casino_cont.visible=false
 		objects.exch_cont.visible=false
 		objects.game_buttons.visible=false
@@ -4215,7 +4139,6 @@ online_game={
 
 bot_game={
 
-	plans_progress:[0,0,0],
 	on:0,
 	opp_conf_play:0,
 	me_conf_play:0,
@@ -4236,8 +4159,6 @@ bot_game={
 		
 		objects.exit_bot_btn.visible=true
 		objects.game_buttons.visible=false
-		
-		this.plans_progress=[0,0,0]		
 		
 		objects.timer_text.text='!!!'
 		
@@ -4307,7 +4228,6 @@ bot_game={
 		
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
-		objects.plans_cont.visible=false
 		objects.exch_cont.visible=false
 		casino.clear()
 		scheduler.stop_all()
@@ -4373,7 +4293,7 @@ bot_game={
 			scheduler.add(()=>{common.sell(2,cell_to_sell)},1000)
 			scheduler.add(()=>{this.try_sell_some()},2000)
 		}else{
-			common.stop('my_win')
+			common.stop('opp_giveup')
 		}
 
 	},
@@ -4384,8 +4304,8 @@ bot_game={
 			sound.play('decline')
 			return
 		}
-		
-		common.stop('my_stop')
+		this.clear()
+		common.stop('my_giveup')
 		
 	},
 	
@@ -4394,8 +4314,10 @@ bot_game={
 		this.on=0
 
 		const res_array = [
-			['my_win',WIN , ['Вы выиграли!','You win!']],
-			['opp_win',WIN , ['Вы проиграли!','You lose!']],
+			['opp_giveup',WIN , ['Соперник банкрот!','You win!']],
+			['my_giveup',LOSE , ['Вы банкрот!','You lose!']],
+			['my_win',WIN , ['Вы выиграли! Ваш капитал больше чем у соперника на более 2000$','You win!']],
+			['opp_win',LOSE , ['Вы проиграли! Ваш капитал меншье чем у соперника на более 2000$','You lose!']],
 			['my_stop',DRAW , ['Вы отменили игру.','You canceled the game']]
 		];
 
@@ -4484,38 +4406,6 @@ bot_game={
 			scheduler.add(()=>{common.opp_fin_move_event()},3500)
 		}
 
-		//цели
-		if (cell.type==='?'){
-			
-			if (this.plans_progress[0]>=100){
-				const empty_cities=common.get_empty_cities(1)
-				
-				if(empty_cities.length) {
-					const empty_city=empty_cities[irnd(0,empty_cities.length-1)]
-					common.capture_empty_city(empty_city)
-					this.plans_progress[0]=0
-					sound.play('achivement')
-					game_msgs.add('Соперник реализовал план Захват ('+empty_city.rus_name+')')
-				}else{
-					
-					game_msgs.add('Соперник не смог реализовать план Захват!')
-				}
-			}else{
-				if (opp_data.money>50){
-					game_msgs.add('Соперник доработал план')
-					this.plans_progress[0]+=25
-					common.change_money(2,-50)
-				}else{
-					game_msgs.add('Соперник получил 100$')
-					common.change_money(2,100)
-				}
-
-			}
-
-			scheduler.add(()=>{this.try_upgrade_some_city()},1000)
-			scheduler.add(()=>{common.opp_fin_move_event()},2000)
-		}
-
 	},
 	
 	play_casino(tar_result){		
@@ -4551,7 +4441,7 @@ bot_game={
 			const empty_cities=common.get_empty_cities(1)
 			if (empty_cities.length){
 				const empty_city=empty_cities.find(city=>city.price<opp_data.money)
-				if (empty_city&&empty_city.price<my_data.money){
+				if (empty_city){
 					common.rebuy(2,empty_city)
 				}else{
 					game_msgs.add('Соперник не смог выкупить город')
@@ -4621,7 +4511,7 @@ common={
 
 		//количество домов
 		this.houses_num=30
-		objects.houses_info.text='Домов в банке: '+this.houses_num
+		objects.houses_info.text='Домов в\nбанке: '+this.houses_num
 		
 		anim3.add(objects.board_bcg,{alpha:[0,1,'linear']}, true, 0.3);
 
@@ -4637,8 +4527,9 @@ common={
 		game_msgs.activate()
 		
 		//начальный баланс
-		this.set_money(1,1000)
-		this.set_money(2,1000)
+		this.set_money(1,START_CAPITAL)
+		this.set_money(2,START_CAPITAL)
+		this.update_total_capital()
 		
 		sound.play('game_start')
 		
@@ -5020,11 +4911,6 @@ common={
 				casino.activate()
 		}
 
-		//цели
-		if (cell.type==='?'){
-			if(cur_player===1)
-				plans.activate()
-		}
 
 		//завершение хода
 		if (cur_player===1){
@@ -5073,7 +4959,7 @@ common={
 		if (move_data.type==='casino_accept'){
 			sys_msg.add('Соперник играет в казино...')
 			if(move_data.pay_to_play)
-				common.change_money(2,-250)
+				common.change_money(2,-CASINO_PRICE_TO_PAY)
 		}
 
 		if (move_data.type==='casino_decline'){
@@ -5084,16 +4970,19 @@ common={
 			
 			if (move_data.result===0){
 				game_msgs.add('Соперник выиграл 300 $ в казино')
+				sound.play('win300')
 				common.change_money(2,300)
 			}
 			if (move_data.result===1){
 				game_msgs.add('Соперник проиграл 300 $ в казино')
+				sound.play('lost300')
 				common.change_money(2,-300)
 			}
 			if (move_data.result===2){
 				if (move_data.city_id){
 					const empty_city=cells_data[move_data.city_id]
-					common.remove_empty_city(empty_city)				
+					common.remove_empty_city(empty_city)	
+					sound.play('city_lost')					
 					game_msgs.add('Соперник потреял город '+empty_city?.rus_name)
 				}else{
 					game_msgs.add('Соперник чуть не потерял город в казино')
@@ -5101,24 +4990,23 @@ common={
 			}
 			if (move_data.result===3){
 				sys_msg.add('Соперник может выкупить пустой город')
+				sound.play('bonus')
 				this.add_bonus('buy_opp_city_bonus',2)
 			}
 			if (move_data.result===4){
 				sys_msg.add('Соперник может купить любой город')
+				sound.play('bonus')
 				this.add_bonus('buy_any_city_bonus',2) 
 			}
 			if (move_data.result===5){
 				sys_msg.add('Соперник не платит ренту 3 хода!')
+				sound.play('norent')
 				common.opp_no_rent_bonus=3
 			}
 		}
 
 		if (move_data.type==='exch'){
 			exch.activate(move_data)
-		}
-
-		if (move_data.type==='plan'){
-			this.opp_activated_plan(move_data)
 		}
 
 		if (move_data.type==='exch_decline'){
@@ -5186,8 +5074,8 @@ common={
 		for (let cell of cells_data){
 			if(cell.owner===player&&cell.level===1){
 				const country=cells_data.filter(d=>d.country===cell.country)
-				const no_monopolised=country.some(c=>{return c.owner!==player})
-				if (no_monopolised)
+				const country_not_built=country.every(c=>{return c.level<2})
+				if (country_not_built)
 					empty_cities.push(cell)
 			}
 		}
@@ -5232,6 +5120,8 @@ common={
 			opp_data.money+=amount
 			objects.opp_card_money.text=opp_data.money+'$'
 		}
+		
+		this.update_total_capital()
 	},
 
 	set_money(player, amount){
@@ -5290,6 +5180,8 @@ common={
 		else
 			game_msgs.add('Вы выкупили город соперника ' + '('+ cell.rus_name +')')
 		
+		this.update_total_capital()
+		
 		//анимация
 		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.2,'ease2back']}, true, 0.6)
 	},
@@ -5300,10 +5192,10 @@ common={
 
 		const price=prc||(cell.level>0?cell.house_cost:cell.price)
 		cell.owner=player
-		this.change_money(player,-price)
+		
 		
 		cell.level++
-		
+		this.change_money(player,-price)
 		//потребляем бонус
 		if (any_city_bonus)
 			this.consume_bonus('buy_any_city_bonus',player)
@@ -5317,13 +5209,13 @@ common={
 		//куплен дом
 		if (cell.level>1&&cell.level<6){
 			this.houses_num--
-			objects.houses_info.text='Домов в банке: '+this.houses_num
+			objects.houses_info.text='Домов в\nбанке: '+this.houses_num
 		}
 
 		//куплен отель, 4 дома вернули в банк
 		if (cell.level===6){
 			this.houses_num+=4
-			objects.houses_info.text='Домов в банке: '+this.houses_num
+			objects.houses_info.text='Домов в\nбанке: '+this.houses_num
 			sound.play('hotel_buy')
 		}else{
 			sound.play('buy')
@@ -5341,7 +5233,43 @@ common={
 				game_msgs.add('Вы купили '+['','город','дом','дом','дом','дом','отель'][cell.level] +' ('+ cell.rus_name +')')
 		}
 	},
-
+	
+	get_total_capital(player){
+	
+		let total_capital=0
+		for (const cell of cells_data){
+			
+			if (cell.owner===player){
+				total_capital+=cell.price
+				total_capital+=(cell.house_cost*(cell.level-1))
+			}	
+		}
+		
+		if (player===1)
+			total_capital+=my_data.money
+		else
+			total_capital+=opp_data.money
+		
+		return total_capital
+	},
+	
+	update_total_capital(){
+		
+		
+		const my_capital=this.get_total_capital(1)
+		const opp_capital=this.get_total_capital(2)
+		
+		objects.my_total_capital.text=my_capital + '$'
+		objects.opp_total_capital.text=opp_capital + '$'
+		
+		if (my_capital-opp_capital>2000)
+			this.stop('my_win')		
+		
+		if (opp_capital-my_capital>2000)
+			this.stop('opp_win')		
+		
+	},
+	
 	sell(player,cell){
 
 		if (cell.type!=='city') return
@@ -5356,13 +5284,13 @@ common={
 		//продан отель, получаем дома из банка
 		if (cell.level===6) {
 			this.houses_num-=4
-			objects.houses_info.text='Домов в банке: '+this.houses_num
+			objects.houses_info.text='Домов в\nбанке: '+this.houses_num
 		}
 
 		//продан дом, возвращаем дома в банк
 		if (cell.level>1&&cell.level<6){
 			this.houses_num++
-			objects.houses_info.text='Домов в банке: '+this.houses_num
+			objects.houses_info.text='Домов в\nбанке: '+this.houses_num
 		}
 
 		cell.level--
@@ -5391,7 +5319,6 @@ common={
 		objects.roll_dice_btn.visible=false
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
-		objects.plans_cont.visible=false
 		objects.exch_cont.visible=false
 				
 		await opponent.stop(res)
@@ -6168,7 +6095,7 @@ lobby={
 		this.fb_cache[my_data.uid].tm=Date.now();
 		objects.feedback_records.forEach(fb=>fb.visible=false);
 
-		message.add(['Отзывы удалены','Feedbacks are removed'][LANG])
+		top_msg.add(['Отзывы удалены','Feedbacks are removed'][LANG])
 
 	},
 
@@ -6439,9 +6366,9 @@ lobby={
 		lobby._opp_data={};
 		this.close_invite_dialog();
 		if(msg==='REJECT_ALL')
-			sys_msg.add(['Соперник пока не принимает приглашения.','The opponent refused to play.'][LANG]);
+			top_msg.add(['Соперник пока не принимает приглашения.','The opponent refused to play.'][LANG])
 		else
-			sys_msg.add(['Соперник отказался от игры. Повторить приглашение можно через 1 минуту.','The opponent refused to play. You can repeat the invitation in 1 minute'][LANG]);
+			top_msg.add(['Соперник отказался от игры. Повторить приглашение можно через 1 минуту.','The opponent refused to play. You can repeat the invitation in 1 minute'][LANG])
 
 	},
 
@@ -6869,8 +6796,7 @@ main_loader={
 		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3')
 		loader.add('auc_change',git_src+'sounds/auc_change.mp3')
 		loader.add('achivement',git_src+'sounds/achivement.mp3')
-		loader.add('can_buy_any_city',git_src+'sounds/can_buy_any_city.mp3')
-		loader.add('casino_m_300',git_src+'sounds/casino_m_300.mp3')
+		loader.add('bonus',git_src+'sounds/bonus.mp3')
 		loader.add('money',git_src+'sounds/money.mp3')
 		loader.add('capture_city',git_src+'sounds/capture_city.mp3')
 		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3')
@@ -6879,14 +6805,13 @@ main_loader={
 		loader.add('chip_go',git_src+'sounds/chip_go.mp3')
 		loader.add('monopoly',git_src+'sounds/monopoly.mp3')
 		loader.add('auc',git_src+'sounds/auc.mp3')
-		loader.add('plans_popup',git_src+'sounds/plans_popup.mp3')
-		loader.add('plans_click',git_src+'sounds/plans_click.mp3')
 		loader.add('city_dlg',git_src+'sounds/city_dlg.mp3')
 		loader.add('roll_btn',git_src+'sounds/roll_btn.mp3')
 		loader.add('casino_roll',git_src+'sounds/casino_roll.mp3')
 		loader.add('casino',git_src+'sounds/casino.mp3')
 		loader.add('decline',git_src+'sounds/decline.mp3')
 		loader.add('lost300',git_src+'sounds/lost300.mp3')
+		loader.add('win300',git_src+'sounds/win300.mp3')
 		loader.add('norent',git_src+'sounds/norent.mp3')
 		loader.add('receive_sticker',git_src+'sounds/receive_sticker.mp3')
 		loader.add('online_message',git_src+'sounds/online_message.mp3')
@@ -6901,7 +6826,7 @@ main_loader={
 		loader.add('clock',git_src+'sounds/clock.mp3')
 		loader.add('music',git_src+'sounds/music2.mp3')
 		loader.add('confirm_dialog',git_src+'sounds/confirm_dialog.mp3')
-		loader.add('keypress',git_src+'sounds/keypress.mp3') 
+		loader.add('keypress',git_src+'sounds/keypress.mp3')
 
 		//прогресс
 		loader.onProgress.add((l,res)=>{
@@ -7205,7 +7130,7 @@ async function init_game_env(lang) {
 
 	//сервисное сообщение
 	if(other_data && other_data.s_msg){
-		message.add(other_data.s_msg);
+		top_msg.add(other_data.s_msg);
 		fbs.ref('players/'+my_data.uid+'/s_msg').remove();
 	}
 
@@ -7291,6 +7216,18 @@ async function init_game_env(lang) {
 	//keep-alive сервис
 	setInterval(function()	{keep_alive()}, 40000);
 
+	//контроль за присутсвием
+	fbs.ref('.info/connected').on('value', snap=>{
+		if (snap.val()){
+			if (!connected)
+				sys_msg.add('Связь с сервером восстановлена!')
+			connected = 1
+		}else{
+			if (connected)
+				sys_msg.add('Связь с сервером потеряна!')
+			connected = 0;		  
+		}
+	})   
 	//убираем попап
 	some_process.loup_anim = function(){};
 	setTimeout(function(){anim3.add(objects.id_cont,{y:[objects.id_cont.sy, -300,'linear'],x:[objects.id_cont.sx,1200,'linear'],angle:[0,200,'linear']}, false, 0.4)},500);
