@@ -2605,25 +2605,7 @@ dice={
 		if (roll_res){
 			this.rnd1=+roll_res[0]
 			this.rnd2=+roll_res[1]
-		}else{
-
-			//выбираем более интересные значения
-			for (let i=0;i<2;i++){
-
-				this.rnd1=irnd(1,6)
-				this.rnd2=irnd(1,6)
-
-				const next_cell_id=(chip.cell_id+this.rnd1+this.rnd2)%cells_data.length
-				const next_cell=cells_data[next_cell_id]
-				
-				//не ходим на свои города
-				if (next_cell.owner!==player)
-					break
-
-			}
-
 		}
-
 
 		this.roll_res=this.rnd1.toString()+this.rnd2.toString()
 
