@@ -7223,6 +7223,8 @@ async function init_game_env(lang) {
 		chat.wheel_event(Math.sign(event.deltaY));
 	});
 	window.addEventListener('keydown', function(event) { keyboard.keydown(event.key)});
+	window.addEventListener('contextmenu', function(e) { e.preventDefault()})
+	
 	//window.addEventListener('contextmenu', event => event.preventDefault());
 
 	main_menu.activate()
