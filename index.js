@@ -7225,10 +7225,11 @@ async function init_game_env(lang) {
 	window.addEventListener('keydown', function(event) { keyboard.keydown(event.key)});
 	//window.addEventListener('contextmenu', event => event.preventDefault());
 
-	main_menu.activate();
+	main_menu.activate()
+	
+	if (game_platform==='YANDEX')
+		window.ysdk.features.LoadingAPI?.ready()
 
-	//покупки яндекса
-	//pref.consume_yndx_purchases();
 }
 
 function main_loop() {
