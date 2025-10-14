@@ -3414,7 +3414,7 @@ casino={
 			common.add_bonus('buy_out_bonus',1)
 		}
 		if (result===4){
-			game_msgs.add('Вы можете купить любой город!')
+			game_msgs.add('Вы можете купить или улучшить другой город!')
 			sound.play('bonus')
 			common.add_bonus('buy_bonus',1)
 		}
