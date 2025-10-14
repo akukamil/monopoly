@@ -2889,12 +2889,6 @@ city_dlg={
 			return
 		}
 
-		if (check_buy_res==='not_all_complete'){
-			sound.play('decline')
-			sys_msg.add('Нужно строить последо вательно!')
-			return
-		}
-
 		if (check_buy_res==='no_money'){
 			sys_msg.add('Недостаточно средств для покупки!')
 			sound.play('decline')
