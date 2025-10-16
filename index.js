@@ -2993,7 +2993,8 @@ city_dlg={
 		}
 
 		common.buyout(1,this.cur_cell)
-
+		common.buy_action_made=1
+		
 		//отправляем сопернику
 		opponent.send({s:my_data.uid,type:'buyout',cell_id:this.cur_cell.id,tm:Date.now()})
 
