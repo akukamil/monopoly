@@ -5159,7 +5159,7 @@ common={
 		}
 
 		if (move_data.type==='coupon'){			
-			if (move_data.id===1){
+			if (move_data.id===2){
 				sound.play('coupon_used')
 				game_msgs.add('Соперник использовал купон на 100$')
 				common.change_money(2,100)
