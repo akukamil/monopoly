@@ -5138,12 +5138,12 @@ common={
 				}
 			}
 			if (move_data.result===3){
-				game_msgs.add('Соперник может выкупить ваш город')
+				game_msgs.add('Соперник выиграл купон на выкуп города')
 				sound.play('bonus')
 				this.add_coupon('buy_out_coupons',2)
 			}			
 			if (move_data.result===4){
-				game_msgs.add('Соперник может купить любой город')
+				game_msgs.add('Соперник выиграл купон на покупку')
 				sound.play('bonus')
 				this.add_coupon('buy_any_coupons',2)
 			}
@@ -7352,6 +7352,7 @@ async function init_game_env(lang) {
 		rating:my_data.rating,
 		nick_tm:my_data.nick_tm,
 		avatar_tm:my_data.avatar_tm,
+		coupons:my_data.coupons,
 		games:my_data.games,
 		country:my_data.country||'',
 		tm:firebase.database.ServerValue.TIMESTAMP,
