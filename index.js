@@ -4643,7 +4643,9 @@ common={
 		this.on=1
 		
 		dice.set_random()
-		game_msgs.activate()		
+		game_msgs.activate()
+		
+		this.prepare_cells()
 		
 		//начальный баланс
 		this.set_money(1,START_CAPITAL)
@@ -4660,7 +4662,7 @@ common={
 		objects.opp_card_rating.text=opp_data.rating
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture
 		
-		this.prepare_cells()
+		
 		
 	},
 	
