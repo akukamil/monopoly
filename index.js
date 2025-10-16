@@ -3077,6 +3077,12 @@ coupons_dlg={
 	
 	use_btn_down(){
 		
+		if (anim3.any_on()){
+			sound.play('decline')
+			return
+		}
+		sound.play('click')
+		
 		if (this.active_coupon_id===0||this.active_coupon_id===1){
 			sound.play('decline')
 			objects.coupons_dlg_info.text='Этот купон нельзя использовать'
