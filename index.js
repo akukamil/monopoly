@@ -5226,12 +5226,10 @@ common={
 			if (move_data.result===3){
 				game_msgs.add('Соперник выиграл купон на выкуп города')
 				sound.play('bonus')
-				this.add_coupon('buy_out_coupons',2)
 			}			
 			if (move_data.result===4){
 				game_msgs.add('Соперник выиграл купон на покупку')
 				sound.play('bonus')
-				this.add_coupon('buy_any_coupons',2)
 			}
 			if (move_data.result===5){
 				game_msgs.add('Соперник не платит ренту 2 раза!')
