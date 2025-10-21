@@ -7081,10 +7081,9 @@ main_loader={
 		loader.add('click',git_src+'sounds/click.mp3')
 		loader.add('auc_bid',git_src+'sounds/auc_bid.mp3')
 		loader.add('auc_change',git_src+'sounds/auc_change.mp3')
-		loader.add('achivement',git_src+'sounds/achivement.mp3')
+		loader.add('dr',git_src+'sounds/dr.mp3')
 		loader.add('bonus',git_src+'sounds/bonus.mp3')
 		loader.add('money',git_src+'sounds/money.mp3')
-		loader.add('capture_city',git_src+'sounds/capture_city.mp3')
 		loader.add('hotel_buy',git_src+'sounds/hotel_buy.mp3')
 		loader.add('city_lost',git_src+'sounds/city_lost.mp3')
 		loader.add('dice',git_src+'sounds/dice.mp3')
@@ -7106,14 +7105,14 @@ main_loader={
 		loader.add('game_start',git_src+'sounds/game_start.mp3')
 		loader.add('coupons_dlg',git_src+'sounds/coupons_dlg.mp3')
 		loader.add('coupons_dlg_accepted',git_src+'sounds/coupons_dlg_accepted.mp3')
-		loader.add('coupons_dlg_decline',git_src+'sounds/coupons_dlg_decline.mp3')
 		loader.add('coupons_dlg_select',git_src+'sounds/coupons_dlg_select.mp3')
 		loader.add('coupon_used',git_src+'sounds/coupon_used.mp3')
 		loader.add('clock',git_src+'sounds/clock.mp3')
 		loader.add('music',git_src+'sounds/music2.mp3')
 		loader.add('confirm_dialog',git_src+'sounds/confirm_dialog.mp3')
 		loader.add('keypress',git_src+'sounds/keypress.mp3')
-
+		loader.add('dr_dlg',git_src+'sounds/dr_dlg.mp3')
+		
 		//прогресс
 		loader.onProgress.add((l,res)=>{
 			this.load_bar_mask.width =410*l.progress*0.01;
