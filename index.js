@@ -2095,8 +2095,7 @@ timer={
 			objects.my_card_cont.alpha=0.5
 			objects.opp_card_cont.alpha=1
 			objects.timer_cont.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5			
-		}.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5
-
+		}
 	},
 
 	update_text(){
