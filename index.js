@@ -678,36 +678,6 @@ class player_mini_card_class extends PIXI.Container {
 
 }
 
-class coupon_class extends PIXI.Container{
-	
-	constructor(){
-		
-		super()
-		this.bcg=new PIXI.Sprite(assets.coupon_icon);
-		this.bcg.width=100
-		this.bcg.height=65
-		this.bcg.anchor.set(0.5,0.5)
-		this.bcg.interactive=true
-		this.bcg.buttonMode=true
-		this.bcg.pointerdown=function(){coupons_dlg.coupon_down(id)}
-		
-		this.icon=new PIXI.Sprite(assets.coupon_100);
-		this.icon.width=70
-		this.icon.height=70
-		this.icon.anchor.set(0.5,0.5)		
-		
-		this.num=new PIXI.BitmapText('', {fontName: 'mfont32',fontSize: 24,align: 'center'})
-		this.num.tint=0xffff00
-		this.num.anchor.set(0.5,0.5)
-		this.num.x=0
-		this.num.y=50
-		
-		this.addChild(this.bcg, this.icon, this.num)
-		
-	}
-	
-}
-
 class feedback_record_class extends PIXI.Container {
 
 	constructor() {
@@ -2117,10 +2087,15 @@ timer={
 
 		objects.timer_cont.visible=true
 
-		if (my_turn)
-			objects.timer_cont.x=objects.my_card_cont.sx+objects.my_avatar.x+objects.my_avatar.width*0.5
-		else
-			objects.timer_cont.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5
+		if (my_turn){
+			objects.my_card_cont.alpha=1
+			objects.opp_card_cont.alpha=0.5
+			objects.timer_cont.x=objects.my_card_cont.sx+objects.my_avatar.x+objects.my_avatar.width*0.5			
+		} else {
+			objects.my_card_cont.alpha=0.5
+			objects.opp_card_cont.alpha=1
+			objects.timer_cont.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5			
+		}.x=objects.opp_card_cont.sx+objects.opp_avatar.x+objects.opp_avatar.width*0.5
 
 	},
 
@@ -2183,22 +2158,22 @@ pref={
 	bcg_loader:null,
 	avatar_switch_center:0,
 	avatar_swtich_cur:0,
-	avatar_changed:0,
 	name_changed:0,
 	tex_loading:0,
 	hours_to_nick_change:999,
 	hours_to_photo_change:999,
 	on:0,
+	shop_coupons_nums:[3,5,10],
 
 	activate(){
 
 		//пока ничего не изменено
-		this.avatar_changed=0
 		this.name_changed=0
+		
 		this.on=1
 
 		//заполняем имя и аватар
-		objects.pref_name.set2(my_data.name,260)
+		objects.pref_name.set2(my_data.name,230)
 		objects.pref_avatar.set_texture(players_cache.players[my_data.uid].texture)
 
 		//мои данные
@@ -2206,42 +2181,96 @@ pref={
 		objects.pref_games.text=['Игры: ','Games: '][LANG]+my_data.games
 		
 		//информация о бонусах
-		objects.pref_energy_info.text=my_data.energy
+		//objects.pref_energy_info.text=my_data.energy
 		
 		this.avatar_switch_center=this.avatar_swtich_cur=irnd(9999,999999)
 
+		//заполняем информацию о купонах
+		this.update_coupons_info()
+
+		//заполняем информацию о ценах
+		const prices=[21,33,63]
+		for (let i=0;i<3;i++){
+			
+			objects.pref_shop_cards[i].alpha=0.4
+			objects.pref_shop_prices[i].text=prices[i]
+			objects.pref_shop_nums[i].text=this.shop_coupons_nums[i]
+			objects.pref_currency_icons[i].texture=assets.vk_voice_img
+			
+		}
+			
+		objects.pref_save_photo_btn.visible=false
+		this.cur_pic_url=my_data.pic_url
+		
 		//обновляем кнопки
 		this.update_buttons()
 
 	},
 
 	init(){
+		
+		
 
-		let i=0
-		setInterval(()=>{
-			
-			if(i===25) this.update_server_tm()
-			if(i===6) this.check_energy2()
-
-			i = (i + 1) % 60
-			
-		},1000)
 		
 	},
 	
-	change_energy(amount){
-		
-		if (amount===0) return
-						
-		my_data.energy+=amount		
-		objects.pref_energy_info.text=my_data.energy
-		safe_ls('domino_energy',my_data.energy)
-			
-		//отправляем в топ3		
-		my_ws.safe_send({cmd:'top3',path:'_day_top3',val:{uid:my_data.uid,val:my_data.energy}})
+	back_btn_down(){
+	
+		if(anim3.any_on()){
+			sound.play('locked');
+			return;
+		}
 
+		sound.play('click')
+		this.switch_to_lobby();
 	},
+	
+	update_coupons_info(){
+		
+		for (let i=0;i<4;i++)
+			objects.pref_coupons_nums[i].text=my_data.coupons[i]
+		
+	},
+	
+	shop_card_down(pack_id){
+		
+		if (game_platform==='VK') {
 
+			vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'monopoly_pack'+pack_id}).then(data =>{
+				for (let i=0;i<4;i++)
+					my_data.coupons[i]+=this.shop_coupons_nums[pack_id]
+				fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
+				this.update_coupons_info()
+				this.send_info('Куплено!')
+			}).catch((err) => {
+				this.send_info('Ошибка при покупке!');
+			});
+
+		};
+		
+		this.send_info('Почему-то не работает(((')
+	},
+	
+	bcg_down(e){
+		
+		const mx = e.data.global.x/app.stage.scale.x
+		const my = e.data.global.y/app.stage.scale.y
+		
+		if (mx>15&&mx<75&&my>80&&my<148)
+			this.arrow_down(-1)
+
+		if (mx>240&&mx<300&&my>80&&my<148)
+			this.arrow_down(1)
+		
+
+		if (mx>510&&mx<640&&my>11&&my<51)
+			this.sound_switch_down()
+
+		if (mx>650&&mx<780&&my>11&&my<51)
+			this.music_switch_down()
+		
+	},
+	
 	getHoursEnding(hours) {
 		hours = Math.abs(hours) % 100;
 		let lastDigit = hours % 10;
@@ -2265,34 +2294,7 @@ pref={
 		})
 
 	},
-			
-	check_energy2(){
 		
-		//нужно удалит первую версию
-		
-		if(!SERVER_TM) return
-		const prv_tm=safe_ls('domino_energy_prv_tm')
-		
-		const cur_msk_day=+new Date(SERVER_TM).toLocaleString('en-US', {timeZone: 'Europe/Moscow',day:'numeric'})
-		const prv_msk_day=+new Date(prv_tm).toLocaleString('en-US', {timeZone: 'Europe/Moscow',day:'numeric'})
-		
-		if (cur_msk_day!==prv_msk_day){			
-			
-			//день поменялся начинаем заново
-			my_data.energy=0		
-			objects.pref_energy_info.text=my_data.energy
-			safe_ls('domino_energy',my_data.energy)		
-
-			//обновляем уникальных соперников (начиниаем с начала)
-			//mp_game.unique_opps=[]
-			//safe_ls(game_name+'_uo', mp_game.unique_opps)
-			
-		}	
-
-		safe_ls('domino_energy_prv_tm',SERVER_TM)
-	
-	},
-	
 	update_buttons(){
 
 		if (!SERVER_TM){
@@ -2305,9 +2307,7 @@ pref={
 		this.hours_to_photo_change=Math.max(0,Math.floor(720-(SERVER_TM-my_data.avatar_tm)*0.001/3600));
 
 		//определяем какие кнопки доступны
-		objects.pref_change_name_btn.alpha=(this.hours_to_nick_change>0||my_data.games<200||!SERVER_TM)?0.5:1;
-		objects.pref_arrow_left.alpha=(this.hours_to_photo_change>0||!SERVER_TM)?0.5:1;
-		objects.pref_arrow_right.alpha=(this.hours_to_photo_change>0||!SERVER_TM)?0.5:1;
+		objects.pref_change_name_btn.alpha=(this.hours_to_nick_change>0||!SERVER_TM)?0.5:1;
 		objects.pref_reset_avatar_btn.alpha=(this.hours_to_photo_change>0||!SERVER_TM)?0.5:1;
 
 	},
@@ -2349,29 +2349,26 @@ pref={
 			sound.play('locked');
 			return;
 		}
-		
-		music.on=1-music.on
 
 		if (music.on){
-			this.send_info(['Музыка включена','Music on'][LANG])
-			music.start()			
-
-		}else{
-			this.send_info(['Музыка отключена','Music off'][LANG])
+			music.on=0
 			music.stop()
+		}else{
+			music.on=1
+			music.start()
 		}
 
 		this.music_set_switch(music.on)
 		safe_ls('monopoly_music',music.on)
-
 	},
-
+	
 	music_set_switch(on){
 		
-		if (on)
-			anim3.add(objects.pref_music_slider,{x:[objects.pref_music_slider.x,707,'linear']}, true, 0.12)
-		else
-			anim3.add(objects.pref_music_slider,{x:[objects.pref_music_slider.x,668,'linear']}, true, 0.12)
+		if (on){
+			objects.pref_msc_bcg.texture=assets.pref_snd_on_img
+		}else{
+			objects.pref_msc_bcg.texture=assets.pref_snd_off_img
+		}
 	},
 
 	sound_switch_down(){
@@ -2382,56 +2379,13 @@ pref={
 		}
 
 		if (sound.on){
-			sound.on=0;
-			this.send_info(['Звуки отключены','Sounds off'][LANG]);
-			anim3.add(objects.pref_sound_slider,{x:[objects.pref_sound_slider.x,668,'linear']}, true, 0.12)//-39
+			sound.on=0
+			objects.pref_snd_bcg.texture=assets.pref_snd_off_img
 		}else{
 			sound.on=1;
-			sound.play('click');
-			this.send_info(['Звуки включены','Sounds on'][LANG]);
-			anim3.add(objects.pref_sound_slider,{x:[objects.pref_sound_slider.x,707,'linear']}, true, 0.12);
+			objects.pref_snd_bcg.texture=assets.pref_snd_on_img
+			sound.play('click')
 		}
-	},
-		
-	ok_btn_down(){
-
-		if(anim3.any_on()){
-			sound.play('locked');
-			return;
-		}
-
-		sound.play('close_it');
-
-		if (this.avatar_changed){
-
-			fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url);
-
-			my_data.avatar_tm=SERVER_TM
-			fbs.ref(`players/${my_data.uid}/avatar_tm`).set(SERVER_TM);
-
-			//обновляем аватар в кэше
-			players_cache.update_avatar_forced(my_data.uid,this.cur_pic_url).then(()=>{
-				const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid);
-				my_card.avatar.set_texture(players_cache.players[my_data.uid].texture);
-			})
-
-		}
-
-		if (this.name_changed){
-
-			my_data.name=this.name_changed;
-
-			//обновляем мое имя в разных системах
-			set_state({});
-
-			my_data.nick_tm=SERVER_TM
-			fbs.ref(`players/${my_data.uid}/nick_tm`).set(my_data.nick_tm);
-			fbs.ref(`players/${my_data.uid}/name`).set(my_data.name);
-
-		}
-
-
-		this.switch_to_lobby();
 
 	},
 
@@ -2443,7 +2397,7 @@ pref={
 		}
 
 		if (my_data.blocked){
-			this.add_info('Функция недоступна, так как вы находитесь в черном списке');
+			this.send_info('Функция недоступна, так как вы находитесь в черном списке');
 			return;
 		}
 
@@ -2454,14 +2408,37 @@ pref={
 			return;
 		}
 
-		this.avatar_changed=1;
-		this.cur_pic_url=my_data.orig_pic_url;
+		objects.pref_save_photo_btn.visible=true
+		objects.pref_save_photo_btn.alpha=1
+		this.cur_pic_url=my_data.orig_pic_url
 		this.tex_loading=1;
-		const t=await players_cache.my_texture_from(my_data.orig_pic_url);
-		objects.pref_avatar.set_texture(t);
-		this.tex_loading=0;
-		this.send_info(['Нажмите ОК чтобы сохранить','Press OK to confirm'][LANG])
+		const t=await players_cache.my_texture_from(my_data.orig_pic_url)
+		objects.pref_avatar.set_texture(t)
+		this.tex_loading=0
+		this.send_info(['Нажмите СОХРАНИТЬ','Press OK to confirm'][LANG])
 
+	},
+	
+	save_photo_down(){
+		
+		if (objects.pref_save_photo_btn.alpha<1) return
+		objects.pref_save_photo_btn.alpha=0.5
+		
+		fbs.ref(`players/${my_data.uid}/pic_url`).set(this.cur_pic_url);
+
+		my_data.avatar_tm=SERVER_TM
+		fbs.ref(`players/${my_data.uid}/avatar_tm`).set(SERVER_TM);
+
+		//обновляем аватар в кэше
+		players_cache.update_avatar_forced(my_data.uid,this.cur_pic_url).then(()=>{
+			const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid);
+			my_card.avatar.set_texture(players_cache.players[my_data.uid].texture);
+		})
+		
+		this.send_info('Вы изменили фото')
+		this.update_buttons()
+
+		
 	},
 
 	async arrow_down(dir){
@@ -2487,23 +2464,24 @@ pref={
 		this.avatar_swtich_cur+=dir;
 		if (this.avatar_swtich_cur===this.avatar_switch_center){
 			this.cur_pic_url=players_cache.players[my_data.uid].pic_url
-			this.avatar_changed=0
 		}else{
 			this.cur_pic_url='mavatar'+this.avatar_swtich_cur
-			this.avatar_changed=1
 		}
 
+		objects.pref_save_photo_btn.visible=true
+		objects.pref_save_photo_btn.alpha=1
+		
 		this.tex_loading=1
 		const t=await players_cache.my_texture_from(multiavatar(this.cur_pic_url))
 		objects.pref_avatar.set_texture(t)
 		this.tex_loading=0
 
 	},
-
+	
 	init_music(){
-		const is_on=safe_ls('monopoly_music')??1
+		const is_on=safe_ls('monopoly_music')??0
 		if (is_on) music.start()
-		this.music_set_switch(music.on)
+		this.music_set_switch(music.on)	
 	},
 
 	async change_name_down(){
@@ -2515,21 +2493,6 @@ pref={
 
 		if (my_data.blocked){
 			this.add_info('Функция недоступна, так как вы находитесь в черном списке');
-			return;
-		}
-
-		const rating_req=1450
-		const games_req=50
-
-		if (!(my_data.rating>=rating_req&&my_data.games>=games_req)){
-			this.send_info([`НУЖНО: Рейтинг >${rating_req}, Игры >${games_req}`,`NEED: Rating >${rating_req}, Games >${games_req}`][LANG])
-			sound.play('locked');
-			return;
-		}
-
-		if (my_data.games<200){
-			this.send_info('Нужно сыграть 200 онлайн партий чтобы поменять имя(((');
-			sound.play('locked');
 			return;
 		}
 
@@ -2552,14 +2515,16 @@ pref={
 			fbs.ref(`players/${my_data.uid}/name`).set(my_data.name)
 
 			this.update_buttons()
-
-			objects.pref_name.set2(name,260)
+			
+			const my_card=objects.mini_cards.find(card=>card.uid===my_data.uid)
+			my_card.name=name
+			my_card.name_text.set2(name,125);
+			objects.pref_name.set2(name,230)
 			this.send_info('Вы изменили имя)))')
 			sound.play('confirm_dialog');
 
 		}else{
 			this.send_info('Неправильное имя(((');
-			anim3.add(objects.pref_info,{alpha:[0,1,'easeBridge']}, false, 3,false);
 		}
 
 	},
@@ -2567,9 +2532,9 @@ pref={
 	close(){
 
 		//убираем контейнер
-		anim3.add(objects.pref_cont,{x:[objects.pref_cont.x,-800,'linear']}, false, 0.4);
-		anim3.add(objects.pref_footer_cont,{y:[objects.pref_footer_cont.y,450,'linear']}, false, 0.4);
-
+		anim3.add(objects.pref_cont,{x:[objects.pref_cont.x,-800,'linear']}, false, 0.4)
+		anim3.add(objects.pref_footer_cont,{y:[objects.pref_footer_cont.y,450,'linear']}, false, 0.4)
+		this.on=0
 	},
 
 	close_btn_down(button_data){
@@ -2584,15 +2549,125 @@ pref={
 
 	switch_to_lobby(){
 
-		this.close();
+		this.close()
 
 		//показываем лобби
-		anim3.add(objects.cards_cont,{x:[800,0,'linear']}, true, 0.4);
-		anim3.add(objects.lobby_header_cont,{y:[-200,objects.lobby_header_cont.sy,'linear']}, true, 0.4);
-		anim3.add(objects.lobby_footer_cont,{y:[450,objects.lobby_footer_cont.sy,'linear']}, true, 0.4);
+		anim3.add(objects.cards_cont,{x:[800,0,'linear']}, true, 0.4)
+		anim3.add(objects.lobby_header_cont,{y:[-200,objects.lobby_header_cont.sy,'linear']}, true, 0.4)
+		anim3.add(objects.lobby_footer_cont,{y:[800,objects.lobby_footer_cont.sy,'linear']}, true, 0.4)
 
 	},
 
+}
+
+dr={
+	
+	bonuses_ids:[0,0,0],
+	bonuses_num:[0,0,0],
+	bonuses_taken:[0,0,0],
+	
+	shuffle(arr){
+
+		let currentIndex = arr.length;
+
+		// While there remain elements to shuffle...
+		while (currentIndex != 0) {
+			// Pick a remaining element...
+			let randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex--;
+
+			// And swap it with the current element.
+			[arr[currentIndex], arr[randomIndex]] = [
+			arr[randomIndex], arr[currentIndex]];
+		}
+		return arr
+	},
+	
+	async check(update_tm){
+		
+		if (update_tm)
+			SERVER_TM=await my_ws.get_tms()||SERVER_TM
+		
+		const prv_tm=safe_ls('monopoly_prv_dr_tm')||0
+		
+		const prv_day_totals=Math.floor(prv_tm / (1000 * 60 * 60 * 24))
+		const cur_day_totals=Math.floor(SERVER_TM / (1000 * 60 * 60 * 24))
+		
+		safe_ls('monopoly_prv_dr_tm',SERVER_TM)
+
+		if ((cur_day_totals-prv_day_totals)===1)
+			this.activate()
+		
+		//повторно проверяем через некоторое время
+		setTimeout(()=>{
+			this.check(1)
+		},300000)
+	},
+	
+	activate(){
+		
+		anim3.add(objects.dr_cont,{alpha:[0, 1,'linear'],angle:[0,5,'ease2back'],scale_xy:[1,1.1,'ease2back']}, true, 1);
+		this.bonuses_ids=this.shuffle([0,1,2,3])
+		this.bonuses_num=[irnd(1,2),irnd(1,2),irnd(1,2)]
+		this.update()
+		sound.play('dr_dlg')
+
+		
+	},
+	
+	update(){
+	
+		for (let i=0;i<3;i++){
+			
+			objects.dr_icons[i].texture=assets[`coupon_${i}_icon`]
+			objects.dr_nums[i].text=this.bonuses_num[i]
+			objects.dr_btns[i].alpha=1
+			
+		}
+		
+	},
+	
+	take_btn_down(id){		
+		
+		if (this.bonuses_taken[id]){
+			sound.play('decline')
+			return
+		}
+		
+		sound.play('dr')
+		
+		objects.dr_btns[id].alpha=0.4
+		objects.dr_nums[id].alpha=0.4
+		objects.dr_icons[id].alpha=0.4
+		this.bonuses_taken[id]=1
+		const coupon_id=this.bonuses_ids[id]
+		const coupons_num=this.bonuses_num[id]
+		my_data.coupons[coupon_id]+=coupons_num
+		
+		fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
+		
+	},
+	
+	close_btn_down(){
+		
+		if(anim3.any_on()){
+			sound.play('locked');
+			return;
+		}
+
+		sound.play('click')
+		
+		this.close()
+		
+	},
+	
+	close(){
+		
+		anim3.add(objects.dr_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5)
+
+		
+	}
+	
 }
 
 dice={
@@ -2861,8 +2936,8 @@ city_dlg={
 		
 		
 		let type=''
-		const can_buy_or_upgrade=((me_on_cell||common.buy_any_coupons||my_data.coupons[0])&&cell.owner===0) || ((me_on_cell||common.buy_any_coupons||my_data.coupons[0])&&cell.owner===1&&is_my_county&&cell.level<6)
-		const can_buy_out=(common.buy_out_coupons||my_data.coupons[1])&&cell.owner===2&&country_not_built
+		const can_buy_or_upgrade=((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===0) || ((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===1&&is_my_county&&cell.level<6)
+		const can_buy_out=(common.temp_coupons[1]||my_data.coupons[1])&&cell.owner===2&&country_not_built
 		const can_sell=cell.owner===1
 	
 		btn1.visible=false
@@ -2877,7 +2952,7 @@ city_dlg={
 			//если нужно задействовать купон
 			if (!me_on_cell){
 				objects.cell_info_coupon_icon.visible=true
-				objects.cell_info_coupon_icon.texture=assets.buy_any_coupon_icon
+				objects.cell_info_coupon_icon.texture=assets.coupon_0_icon
 			}
 
 			btn2.visible=true
@@ -2895,7 +2970,7 @@ city_dlg={
 		if (can_buy_out){
 			
 			objects.cell_info_coupon_icon.visible=true
-			objects.cell_info_coupon_icon.texture=assets.buy_out_coupon_icon
+			objects.cell_info_coupon_icon.texture=assets.coupon_1_icon
 			
 			btn2.visible=true
 			btn2_t.visible=true
@@ -2952,7 +3027,7 @@ city_dlg={
 
 		//покупка за купоны
 		if (buy_any_coupons){
-			if (!common.buy_any_coupons&&common.perm_coupons_used[0]>=3){
+			if (!common.temp_coupons[0]&&common.perm_coupons_used[0]>=3){
 				sys_msg.add('Использование купона невозможно более 3 раз за игру!')
 				sound.play('decline')
 				return
@@ -2986,7 +3061,7 @@ city_dlg={
 			return
 		}
 
-		if (!common.buy_out_coupons&&common.perm_coupons_used[1]>=3){
+		if (!common.temp_coupons[1]&&common.perm_coupons_used[1]>=3){
 			sys_msg.add('Использование купона невозможно более 3 раз за игру!')
 			sound.play('decline')
 			return
@@ -2994,7 +3069,7 @@ city_dlg={
 
 		common.buyout(1,this.cur_cell)
 		common.buy_action_made=1
-		
+
 		//отправляем сопернику
 		opponent.send({s:my_data.uid,type:'buyout',cell_id:this.cur_cell.id,tm:Date.now()})
 
@@ -3037,32 +3112,51 @@ city_dlg={
 	},
 
 }
-
 coupons_dlg={
 	
 	active_coupon_id:0,
-	block_pos:[[90,80],[90,220],[160,80],[160,220]],
+	block_pos:[[100,90],[100,220],[170,90],[170,220]],
 	
 	activate(){
 			
 		sound.play('coupons_dlg')
 		
-		for (let i=0;i<4;i++)
-			objects.coupons_num[i].text='x'+my_data.coupons[i]
-
-		if (common.buy_any_coupons){
-			objects.coupons_dlg_buy_any_coupons.visible=true
-			objects.coupons_dlg_buy_any_coupons.text='x'+common.buy_any_coupons
+		for (let i=0;i<4;i++){
+			
+			if (common.temp_coupons[i]||my_data.coupons[i]){
+				
+				if (common.temp_coupons[i]){
+					objects.temp_coupons_num[i].visible=true
+					objects.temp_coupons_num[i].alpha=1
+					objects.temp_coupons_num[i].text=common.temp_coupons[i]
+				}else{
+					if (i<2)
+						objects.temp_coupons_num[i].visible=false
+				}
+				
+				if (my_data.coupons[i]){
+					objects.coupons_num[i].alpha=1
+					objects.coupons_num[i].text=my_data.coupons[i]
+				}
+				
+				objects.coupons_icons[i].alpha=1
+				
+			}else{
+				
+				
+				objects.coupons_icons[i].alpha=0.3
+				
+				if (i<2){
+					objects.temp_coupons_num[i].alpha=0.3
+					objects.temp_coupons_num[i].text='0'
+				}
+				
+				objects.coupons_num[i].alpha=0.3
+				objects.coupons_num[i].text='0'
+			}
+			
+			
 		}
-		else
-			objects.coupons_dlg_buy_any_coupons.visible=false
-
-		if (common.buy_out_coupons){
-			objects.coupons_dlg_buy_out_coupons.visible=true
-			objects.coupons_dlg_buy_out_coupons.text='x'+common.buy_out_coupons
-		}
-		else
-			objects.coupons_dlg_buy_out_coupons.visible=false		
 
 		anim3.add(objects.coupons_dlg_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2);
 	},
@@ -3112,7 +3206,7 @@ coupons_dlg={
 			game_msgs.add('Вы использовали купон на 100$')
 			common.change_money(1,100)
 			opponent.send({s:my_data.uid,type:'coupon',id:this.active_coupon_id,tm:Date.now()})
-			this.consume_coupon(this.active_coupon_id)
+			common.consume_coupon(this.active_coupon_id)
 			this.close()
 		}
 		
@@ -3136,7 +3230,7 @@ coupons_dlg={
 			game_msgs.add('Вы использовали купон для освобождения от ренты на 3 случая')
 			common.my_no_rent_bonus=3
 			opponent.send({s:my_data.uid,type:'coupon',id:this.active_coupon_id,tm:Date.now()})
-			this.consume_coupon(this.active_coupon_id)
+			common.consume_coupon(this.active_coupon_id)
 			this.close()
 		}
 		
@@ -3158,13 +3252,13 @@ coupons_dlg={
 		console.log(mx,my)
 		sound.play('coupons_dlg_select')
 		
-		if (my<132){
-			if (mx<174)
+		if (my<142){
+			if (mx<197)
 				this.active_coupon_id=0
 			else
 				this.active_coupon_id=1
 		}else{
-			if (mx<174)
+			if (mx<197)
 				this.active_coupon_id=2
 			else
 				this.active_coupon_id=3
@@ -3189,7 +3283,7 @@ coupons_dlg={
 		anim3.add(objects.coupons_dlg_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5)
 		
 	}
-		
+
 }
 
 fin={
@@ -3622,14 +3716,14 @@ casino={
 			}
 		}
 		if (result===3){
-			game_msgs.add('Вы можете выкупить пустой город соперника!')
+			game_msgs.add('Вы выиграли купон на выкуп города соперника!')
 			sound.play('bonus')
-			common.add_coupon('buy_out_coupons',1)
+			common.add_temp_coupon(1)
 		}
 		if (result===4){
-			game_msgs.add('Вы можете купить или улучшить другой город!')
+			game_msgs.add('Вы выиграли купон на покупку другого горда!')
 			sound.play('bonus')
-			common.add_coupon('buy_any_coupons',1)
+			common.add_temp_coupon(0)
 		}
 		if (result===5){
 			game_msgs.add('Вы выиграли освобождение от ренты на 2 случая!')
@@ -4153,7 +4247,6 @@ online_game={
 		
 	},
 	
-
 	calc_new_rating(old_rating, game_result) {
 
 		if (game_result === NOSYNC)
@@ -4348,6 +4441,7 @@ bot_game={
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
 		objects.exch_cont.visible=false
+		objects.coupons_dlg_cont.visible=false
 		casino.clear()
 		scheduler.stop_all()
 		sys_msg.close()
@@ -4599,12 +4693,11 @@ common={
 
 	on:0,
 	houses_num:30,
-	buy_bonus:0,
-	buy_out_bonus:0,
 	buy_action_made:0,
 	chip_sound_timer:0,
 	my_no_rent_bonus:0,
 	opp_no_rent_bonus:0,
+	temp_coupons:[0,0],
 	perm_coupons_used:[0,0,0,0],
 	move_on:0,
 	pay_casino_played:0,
@@ -4629,9 +4722,8 @@ common={
 		//бонусы не платить ренту
 		this.my_no_rent_bonus=0
 		this.opp_no_rent_bonus=0
-		this.buy_any_coupons=0
-		this.buy_out_coupons=0
-		this.perm_coupons_used=[0,0,0,0]
+		this.temp_coupons=[0,0]
+		this.perm_coupons_used=[0,0,0,0]	
 		
 		opponent.opp_conf_play=0
 		opponent.me_conf_play=0
@@ -4673,27 +4765,21 @@ common={
 		
 	},
 	
-	add_coupon(coupon){
+	add_temp_coupon(coupon_id){
 	
-		this[coupon]++
-
+		this.temp_coupons[coupon_id]++
+		this.update_coupons_btn()
 	},
 	
-	consume_coupon(coupon){
+	consume_coupon(coupon_id){
 
 		//если нету временных купонов то убираем из постоянных
-		if (this[coupon]===0){
-			
-			if (coupon==='buy_any_coupons')
-				coupons_dlg.consume_coupon(0)
-			
-			if (coupon==='buy_out_coupons')
-				coupons_dlg.consume_coupon(1)
-			
-			return
-		}
-			
-		this[coupon]--
+		if (!this.temp_coupons[coupon_id])
+			coupons_dlg.consume_coupon(coupon_id)
+		else
+			this.temp_coupons[coupon_id]--
+		
+		this.update_coupons_btn()
 
 	},
 	
@@ -5297,13 +5383,40 @@ common={
 		
 	},
 	
+	coupons_btn_down(){
+		
+		if (anim3.any_on()||!this.on){
+			sound.play('locked');
+			return
+		}
+		
+		if(!my_turn){
+			sys_msg.add('Не ваша очередь!')
+			return
+		}
+
+		if(!my_turn_started){
+			sys_msg.add('Сначала нужно бросить кубики...')
+			return
+		}		
+		
+		coupons_dlg.activate()
+		
+	},
+	
+	update_coupons_btn(){
+		
+		//objects.coupons_btn_num.text=my_data.coupons[0]+my_data.coupons[1]+my_data.coupons[2]+my_data.coupons[3]+this.temp_coupons[0]+this.temp_coupons[1]
+		
+	},
+	
 	buyout(player,cell){
 		
 		cell.owner=player
 		this.change_money(player,-cell.price)
 		
 		//потребляем купон
-		if (player===1) this.consume_coupon('buy_out_coupons')
+		if (player===1) this.consume_coupon(1)
 		
 		//обновляем всю страну так как там тоже могло поменяться
 		this.update_view(cell)
@@ -5334,7 +5447,7 @@ common={
 
 		//потребляем бонус
 		if (buy_any_coupons&&player===1)
-			this.consume_coupon('buy_any_coupons')
+			this.consume_coupon(0)
 		
 		//анимация
 		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
@@ -6363,9 +6476,8 @@ lobby={
 
 		some_process.lobby=function(){};
 
-		//if (objects.pref_cont.visible)
-		//	pref.close();
-
+		if (pref.on)
+			pref.close()
 
 		//плавно все убираем
 		anim3.add(objects.cards_cont,{alpha:[1, 0,'linear']}, false, 0.1);
@@ -7382,6 +7494,9 @@ async function init_game_env(lang) {
 	
 	SERVER_TM=await my_ws.get_tms() 
 
+	//проверка ежедневного бонуса
+	dr.check()
+	
 	//устанавливаем мой статус в онлайн
 	set_state({state:'o'});
 
