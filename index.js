@@ -2162,6 +2162,7 @@ pref={
 	hours_to_nick_change:999,
 	hours_to_photo_change:999,
 	on:0,
+	yndx_catalog:0,
 	shop_coupons_nums:[3,5,10],
 
 	activate(){
@@ -2203,7 +2204,24 @@ pref={
 		
 		//обновляем кнопки
 		this.update_buttons()
+		
+		this.update_shop()
 
+	},
+	
+	async update_shop(){
+	
+		if (game_platform==='YANDEX'){
+			
+			this.yndx_catalog=await yndx_payments.getCatalog()
+			const money_pic_url=this.yndx_catalog.getPriceCurrencyImage('medium')
+			const money_texture = await PIXI.Texture.fromURL(pic_url);
+			for (let i=0;i<3;i++){
+				objects.pref_currency_icons[i].texture=money_texture
+				objects.pref_shop_prices[i].text=this.yndx_catalog[i].price
+			}			
+		}		
+		
 	},
 
 	init(){
