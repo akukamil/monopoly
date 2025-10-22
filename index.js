@@ -3111,6 +3111,7 @@ city_dlg={
 	},
 
 }
+
 coupons_dlg={
 	
 	active_coupon_id:0,
@@ -3248,7 +3249,7 @@ coupons_dlg={
 		
 		const mx = e.data.global.x/app.stage.scale.x-objects.coupons_dlg_cont.x+objects.coupons_dlg_cont.width*0.5
 		const my = e.data.global.y/app.stage.scale.y-objects.coupons_dlg_cont.y+objects.coupons_dlg_cont.height*0.5
-		console.log(mx,my)
+
 		sound.play('coupons_dlg_select')
 		
 		if (my<142){
@@ -4120,8 +4121,9 @@ online_game={
 		sound.play('start2')
 
 		//показываем кнопки
-		objects.exit_bot_btn.visible=false
-		objects.game_buttons.visible=true
+		anim3.add(objects.game_btns_cont,{x:[800,objects.game_btns_cont.sx,'linear']}, true, 0.3)
+		objects.stickers_btn.visible=true
+		objects.chat_btn.visible=true
 		
 		//общие параметры
 		common.activate()
@@ -4177,72 +4179,24 @@ online_game={
 		}
 	},
 
-	game_btn_down(e){
-
+	chat_btn_down(){
+		
 		if (anim3.any_on()||!this.on){
 			sound.play('locked');
 			return
 		}
-
-		const mx = e.data.global.x/app.stage.scale.x - objects.game_buttons.sx;
-		const my = e.data.global.y/app.stage.scale.y - objects.game_buttons.sy;
-
-		const btns_pos = [this.stickers_btn_pos, this.chat_btn_pos, this.giveup_btn_pos, this.exch_btn_pos];
-
-		let min_dist=999;
-		let min_button=-1;
-
-		for (let b = 0 ; b < 4 ; b++) {
-
-			const anchor_pos = btns_pos[b];
-			const dx = mx-anchor_pos[0];
-			const dy = my-anchor_pos[1];
-			const d = Math.sqrt(dx * dx + dy * dy);
-
-			if (d < 40 && d < min_dist) {
-				min_dist = d;
-				min_btn_id = b;
-			}
-		}
-
-		//подсветка кнопки
-		if (min_btn_id !== -1) {
-			sound.play('click');
-			objects.hl_main_btn.x=btns_pos[min_btn_id][0]+objects.game_buttons.sx;
-			objects.hl_main_btn.y=btns_pos[min_btn_id][1]+objects.game_buttons.sy;
-			anim3.add(objects.hl_main_btn,{alpha:[1,0,'linear']}, false, 0.6,false);
-		}
-
-
-		if (min_btn_id === 0)
-			stickers.show_panel()
-		if (min_btn_id === 1)
-			this.send_message()
-		if (min_btn_id === 2)
-			this.exit_btn_down()
-		if (min_btn_id === 3)
-			this.coupons_btn_down()
-
+		
+		this.send_message()
 	},
-
-	coupons_btn_down(){
+	
+	stickers_btn_down(){
 		
 		if (anim3.any_on()||!this.on){
 			sound.play('locked');
 			return
 		}
 		
-		if(!my_turn){
-			sys_msg.add('Не ваша очередь!')
-			return
-		}
-
-		if(!my_turn_started){
-			sys_msg.add('Сначала нужно бросить кубики...')
-			return
-		}		
-		
-		coupons_dlg.activate()
+		stickers.show_panel()
 		
 	},
 	
@@ -4323,9 +4277,8 @@ online_game={
 		objects.casino_cont.visible=false
 		objects.exch_cont.visible=false
 		objects.coupons_dlg_cont.visible=false
-		sys_msg.close()
+		sys_msg.close()	
 		
-		objects.game_buttons.visible=false
 		
 	},
 	
@@ -4341,7 +4294,6 @@ online_game={
 		objects.swords.visible=false;
 		objects.my_card_cont.visible=false;
 		objects.opp_card_cont.visible=false;
-		objects.game_buttons.visible=false;
 		set_state({state:'o'});
 
 	}
@@ -4368,8 +4320,10 @@ bot_game={
 		
 		opponent=this
 		
-		objects.exit_bot_btn.visible=true
-		objects.game_buttons.visible=false
+		//показываем кнопки
+		anim3.add(objects.game_btns_cont,{x:[800,objects.game_btns_cont.sx,'linear']}, true, 0.3)
+		objects.stickers_btn.visible=false
+		objects.chat_btn.visible=false
 		
 		objects.timer_text.text='!!!'
 		
@@ -4434,9 +4388,7 @@ bot_game={
 	},
 
 	clear(){
-		
-		objects.exit_bot_btn.visible=false
-		
+				
 		objects.auc_cont.visible=false
 		objects.cell_info_cont.visible=false
 		objects.exch_cont.visible=false
@@ -4527,9 +4479,6 @@ bot_game={
 
 		const result_number = res_array.find( p => p[0] === res)[1];
 		const result_info = res_array.find( p => p[0] === res)[2][LANG];
-
-		//выключаем элементы
-		objects.exit_bot_btn.visible=false		
 
 		//воспроизводим звук
 		if (result_number === DRAW || result_number === LOSE)
@@ -4749,6 +4698,7 @@ common={
 		this.set_money(1,START_CAPITAL)
 		this.set_money(2,START_CAPITAL)
 		this.update_total_capital()
+		this.update_coupons_btn()
 		
 		sound.play('game_start')
 		
@@ -4759,9 +4709,7 @@ common={
 		objects.opp_card_name.set2(opp_data.name,120)
 		objects.opp_card_rating.text=opp_data.rating
 		objects.opp_avatar.texture=players_cache.players[opp_data.uid].texture
-		
-		
-		
+
 	},
 	
 	add_temp_coupon(coupon_id){
@@ -5403,7 +5351,8 @@ common={
 	
 	update_coupons_btn(){
 		
-		//objects.coupons_btn_num.text=my_data.coupons[0]+my_data.coupons[1]+my_data.coupons[2]+my_data.coupons[3]+this.temp_coupons[0]+this.temp_coupons[1]
+		objects.temp_coupons_btn_num.text=this.temp_coupons[0]+this.temp_coupons[1]
+		objects.perm_coupons_btn_num.text=my_data.coupons[0]+my_data.coupons[1]+my_data.coupons[2]+my_data.coupons[3]
 		
 	},
 	
@@ -5568,7 +5517,8 @@ common={
 		objects.cell_info_cont.visible=false
 		objects.exch_cont.visible=false
 		objects.coupons_dlg_cont.visible=false
-				
+		anim3.add(objects.game_btns_cont,{x:[objects.game_btns_cont.x,800,'linear']}, false, 0.3)
+		
 		await opponent.stop(res)
 		
 
@@ -7104,7 +7054,6 @@ main_loader={
 		loader.add('win',git_src+'sounds/win.mp3')
 		loader.add('game_start',git_src+'sounds/game_start.mp3')
 		loader.add('coupons_dlg',git_src+'sounds/coupons_dlg.mp3')
-		loader.add('coupons_dlg_accepted',git_src+'sounds/coupons_dlg_accepted.mp3')
 		loader.add('coupons_dlg_select',git_src+'sounds/coupons_dlg_select.mp3')
 		loader.add('coupon_used',git_src+'sounds/coupon_used.mp3')
 		loader.add('clock',git_src+'sounds/clock.mp3')
