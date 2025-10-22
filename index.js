@@ -2218,7 +2218,7 @@ pref={
 			const money_texture = await PIXI.Texture.fromURL(money_pic_url);
 			for (let i=0;i<3;i++){
 				objects.pref_currency_icons[i].texture=money_texture
-				objects.pref_shop_prices[i].text=this.yndx_catalog[i].price
+				objects.pref_shop_prices[i].text=this.yndx_catalog[i].priceValue
 			}			
 		}		
 		
