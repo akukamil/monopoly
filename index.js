@@ -5382,11 +5382,6 @@ common={
 			sys_msg.add('Не ваша очередь!')
 			return
 		}
-
-		if(!my_turn_started){
-			sys_msg.add('Сначала нужно бросить кубики...')
-			return
-		}		
 		
 		coupons_dlg.activate()
 		
