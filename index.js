@@ -2214,8 +2214,8 @@ pref={
 		if (game_platform==='YANDEX'){
 			
 			this.yndx_catalog=await yndx_payments.getCatalog()
-			const money_pic_url=this.yndx_catalog.getPriceCurrencyImage('medium')
-			const money_texture = await PIXI.Texture.fromURL(pic_url);
+			const money_pic_url=this.yndx_catalog[0].getPriceCurrencyImage('medium')
+			const money_texture = await PIXI.Texture.fromURL(money_pic_url);
 			for (let i=0;i<3;i++){
 				objects.pref_currency_icons[i].texture=money_texture
 				objects.pref_shop_prices[i].text=this.yndx_catalog[i].price
