@@ -2257,14 +2257,7 @@ pref={
 		if (game_platform==='VK') {
 
 			vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item}).then(data =>{
-				my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:item}});
-				
-				for (let i=0;i<4;i++)
-					my_data.coupons[i]+=this.shop_coupons_nums[pack_id]
-				fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
-				this.update_coupons_info()
-				this.send_info('Куплено!')
-				
+				this.process_purchase(pack_id)				
 			}).catch((err) => {
 				this.send_info('Ошибка при покупке!');
 			});
@@ -2275,24 +2268,30 @@ pref={
 		if (game_platform==='YANDEX'){
 			
 			yndx_payments.purchase({id: item }).then(purchase => {
-
-				my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:item}});
 				yndx_payments.consumePurchase(purchase.purchaseToken);
-				
-				for (let i=0;i<4;i++)
-					my_data.coupons[i]+=this.shop_coupons_nums[pack_id]
-				fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
-				this.update_coupons_info()
-				this.send_info('Куплено!')
-				
+				this.process_purchase(pack_id)				
 			}).catch(err => {
-				this.send_info(['Ошибка при покупке!','Error!'][LANG]);
+				this.send_info('Ошибка при покупке!');
 			})
 			
 		}
-		
-		//this.send_info('Почему-то не работает(((')
+			
 	},
+	
+	process_purchase(pack_id){
+		
+		my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:pack_id}});
+		for (let i=0;i<4;i++){
+			anim3.add(objects.pref_coupons_nums[i],{scale_xy:[1,1.5,'ease2back'],angle:[0,10,'ease2back']},true, 1)
+			my_data.coupons[i]+=this.shop_coupons_nums[pack_id]			
+		}
+
+		fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
+		this.update_coupons_info()
+		this.send_info('Куплено!')
+		sound.play('dr')	
+		
+	}
 	
 	bcg_down(e){
 		
@@ -2835,7 +2834,7 @@ big_msg = {
 		objects.big_msg_t2.text=params.t2||''
 		objects.big_msg_t3.text=params.t3||''
 
-		objects.big_msg_fb_btn.visible = (!my_data.blocked)&&params.fb&&my_data.games>=200
+		objects.big_msg_fb_btn.visible = true
 
 		anim3.add(objects.big_msg_cont,{angle:[0,5,'ease2back'],alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
 
