@@ -2251,21 +2251,47 @@ pref={
 	
 	shop_card_down(pack_id){
 		
+		
+		const item='monopoly_pack'+pack_id
+		
 		if (game_platform==='VK') {
 
-			vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'monopoly_pack'+pack_id}).then(data =>{
+			vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item}).then(data =>{
+				my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:item}});
+				
 				for (let i=0;i<4;i++)
 					my_data.coupons[i]+=this.shop_coupons_nums[pack_id]
 				fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
 				this.update_coupons_info()
 				this.send_info('Куплено!')
+				
 			}).catch((err) => {
 				this.send_info('Ошибка при покупке!');
 			});
 
-		};
+		}
 		
-		this.send_info('Почему-то не работает(((')
+		
+		if (game_platform==='YANDEX'){
+			
+			yndx_payments.purchase({id: item }).then(purchase => {
+				this.restore_cue(this.cur_cue_id)
+				my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:item}});
+				yndx_payments.consumePurchase(purchase.purchaseToken);
+				
+				for (let i=0;i<4;i++)
+					my_data.coupons[i]+=this.shop_coupons_nums[pack_id]
+				fbs.ref('players/'+my_data.uid+'/coupons').set(my_data.coupons)
+				this.update_coupons_info()
+				this.send_info('Куплено!')
+				
+			}).catch(err => {
+				this.send_info(['Ошибка при покупке!','Error!'][LANG]);
+			})
+			
+		}
+		
+		//this.send_info('Почему-то не работает(((')
 	},
 	
 	bcg_down(e){
