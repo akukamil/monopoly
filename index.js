@@ -2291,7 +2291,7 @@ pref={
 		this.send_info('Куплено!')
 		sound.play('dr')	
 		
-	}
+	},
 	
 	bcg_down(e){
 		
