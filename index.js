@@ -2275,7 +2275,7 @@ pref={
 		if (game_platform==='YANDEX'){
 			
 			yndx_payments.purchase({id: item }).then(purchase => {
-				this.restore_cue(this.cur_cue_id)
+
 				my_ws.safe_send({cmd:'log_inst',logger:'payments',data:{game_name,uid:my_data.uid,name:my_data.name,item_id:item}});
 				yndx_payments.consumePurchase(purchase.purchaseToken);
 				
