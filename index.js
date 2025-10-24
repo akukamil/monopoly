@@ -2766,9 +2766,9 @@ dice={
 				const next_cell=cells_data[next_cell_id]
 				
 				const country=cells_data.filter(d=>d.country===next_cell.country)
-				const is_my_county=country.every(d=>d.owner===1)
+				const is_my_county=country.every(d=>d.owner===player)
 				//ходим только на чужие или пустые города или по своим монополиям
-				if ((next_cell.owner!==1) || is_my_county)
+				if ((next_cell.owner!==player) || is_my_county)
 					break
 			}
 		}
