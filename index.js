@@ -2754,6 +2754,23 @@ dice={
 		if (roll_res){
 			this.rnd1=+roll_res[0]
 			this.rnd2=+roll_res[1]
+		}else{
+
+			//выбираем более интересные значения
+			for (let i=0;i<2;i++){
+
+				this.rnd1=irnd(1,6)
+				this.rnd2=irnd(1,6)
+
+				const next_cell_id=(chip.cell_id+this.rnd1+this.rnd2)%cells_data.length
+				const next_cell=cells_data[next_cell_id]
+				
+				const country=cells_data.filter(d=>d.country===next_cell.country)
+				const is_my_county=country.every(d=>d.owner===1)
+				//ходим только на чужие или пустые города или по своим монополиям
+				if ((next_cell.owner!==1) || is_my_county)
+					break
+			}
 		}
 
 		this.roll_res=this.rnd1.toString()+this.rnd2.toString()
