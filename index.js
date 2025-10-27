@@ -811,13 +811,13 @@ req_dialog={
 
 
 		//отправляем информацию о согласии играть с идентификатором игры и сидом
-		game_id=irnd(1,9999);
-		const seed = irnd(1,9999);
-		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'ACCEPT',tm:Date.now(),game_id,seed});
+		game_id=irnd(1,9999)
+		const auc=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'ACCEPT',game_id,auc,tm:Date.now()});
 
 		main_menu.close();
 		lobby.close();
-		online_game.activate(seed,1);
+		online_game.activate({turn:1,auc});
 
 	},
 
@@ -4156,11 +4156,11 @@ online_game={
 	me_conf_play:0,
 	write_fb_timer:0,
 
-	activate(seed, turn){
+	activate(params){
 
 		this.on=1;
 
-		my_turn=turn;
+		my_turn=params.turn;
 		
 		//запоминаем оппонента
 		opponent=this
@@ -4190,7 +4190,7 @@ online_game={
 		objects.chat_btn.visible=true
 		
 		//общие параметры
-		common.activate()
+		common.activate(params)
 		
 		if (my_turn)
 			game_msgs.add('Началась онлайн игра, ваш ход...')
@@ -4391,7 +4391,8 @@ bot_game={
 		
 		objects.timer_text.text='!!!'
 		
-		common.activate()
+		const auc=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
+		common.activate({auc})
 		
 		game_msgs.add('Игра против бота началась, ваш ход...')
 
@@ -4714,7 +4715,7 @@ common={
 	move_on:0,
 	pay_casino_played:0,
 
-	activate(){
+	activate(params){
 
 		if (my_turn){
 			this.opp_fin_move_event()
@@ -4756,7 +4757,7 @@ common={
 		dice.set_random()
 		game_msgs.activate()
 		
-		this.prepare_cells()
+		this.prepare_cells(params.auc)
 		
 		//начальный баланс
 		this.set_money(1,START_CAPITAL)
@@ -4794,7 +4795,7 @@ common={
 
 	},
 	
-	prepare_cells(){
+	prepare_cells(auc_data=[]){
 		
 		for (let i=0;i<24;i++){
 
@@ -4813,17 +4814,25 @@ common={
 			}
 
 			if (cell.type==='city'){
+				cell_obj.price.visible=true
 				cell_obj.price.text=cell.price+'$'
 				cell_obj.interactive=true
 				cell_obj.buttonMode=true
 				cell_obj.pointerdown=function(){common.cell_down(i)}
-				cell_obj.auc_icon.visible=cell.auc?true:false
+
 				cell_obj.city_name.text=cell.rus_name
 				cell.owner=0
 				cell.level=0
 				cell_obj.level_icon.texture=null
-				cell_obj.price.visible=true
-				cell_obj.auc_icon.visible=cell.auc?true:false
+				
+				//проверяем аукцион
+				if (auc_data.includes(i)){
+					cell.auc=1
+					cell_obj.auc_icon.visible=true
+				}else{
+					cell.auc=0
+					cell_obj.auc_icon.visible=false
+				}
 			}
 
 			if (cell.type==='casino'){
@@ -6693,7 +6702,6 @@ lobby={
 
 	async accepted_invite(data) {
 
-
 		//убираем запрос на игру если он открыт
 		req_dialog.hide();
 
@@ -6703,9 +6711,8 @@ lobby={
 
 		//закрываем меню и начинаем игру
 		await lobby.close();
-		online_game.activate(data.seed,0);
+		online_game.activate({turn:0,auc:data.auc||[]});
 		//game2.activate('master');
-
 
 	},
 
