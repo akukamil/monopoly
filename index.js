@@ -5326,6 +5326,7 @@ common={
 		//убираем владельца города
 		city_cell.owner=0
 		city_cell.level=0
+		city_cell.auc=1
 		this.update_view(city_cell)
 		
 		//анимация
