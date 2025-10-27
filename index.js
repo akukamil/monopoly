@@ -5164,7 +5164,7 @@ common={
 
 		//завершение хода
 		if (cur_player===1){
-			if (cell.type==='city'&&!cell.auc){
+			if (cell.type==='city'){
 				const country=cells_data.filter(d=>d.country===cell.country)
 				const is_my_county=country.every(d=>d.owner===1)
 				if (is_my_county)
