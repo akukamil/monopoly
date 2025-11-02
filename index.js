@@ -7023,14 +7023,16 @@ main_loader={
 	async load1(){
 
 
-		const loader=new PIXI.Loader();
+		const loader=new PIXI.Loader()
+		
+		git_src='https://monopoly.hb.ru-msk.vkcloud-storage.ru/'
 
 		//добавляем текстуры из листа загрузки
 		loader.add('load_bar_bcg', git_src+'res/'+'common/load_bar_bcg.png');
 		loader.add('main_bcg', git_src+'res/common/main_bcg.jpg');
 		loader.add('load_bar_progress', git_src+'res/'+'common/load_bar_progress.png');
-		loader.add('mfont2',git_src+'/fonts/core_sans_ds_32/font.fnt');
-		loader.add('main_load_list',git_src+'/load_list.txt');
+		loader.add('mfont2',git_src+'fonts/core_sans_ds_32/font.fnt');
+		loader.add('main_load_list',git_src+'load_list.txt');
 
 		//переносим все в ассеты
 		await new Promise(res=>loader.load(res))
@@ -7108,7 +7110,7 @@ main_loader={
 				loader.add(load_list[i].name, git_src+'res/'+lang_pack + '/' + load_list[i].name + "." +  load_list[i].image_format);
 
 
-		loader.add('mfont64',git_src+'/fonts/core_sans_ds_64/font.fnt');
+		loader.add('mfont64',git_src+'fonts/core_sans_ds_64/font.fnt');
 		//loader.add('lobby_bcg',git_src+'res/common/lobby_bcg_img.jpg');
 		//loader.add('main_bcg',git_src+'res/common/main_bcg_img.jpg');
 
