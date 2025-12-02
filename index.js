@@ -5368,7 +5368,7 @@ common={
 			if (cell.type==='city'){
 				const country=cells_data.filter(d=>d.country===cell.country)
 				const is_my_county=country.every(d=>d.owner===1)
-				if (is_my_county)
+				if (is_my_county&&cell.level<6)
 					city_dlg.show(cell)
 			}				
 		}
