@@ -726,18 +726,11 @@ class cell_class extends PIXI.Container{
 		this.level_icon.scale_xy=0.7
 		//this.level_icon.alpha=0.4
 
-		this.auc_icon=new PIXI.Sprite(assets.auc_icon)
-		this.auc_icon.anchor.set(0.5,0.5)
-		this.auc_icon.y=-1
-		this.auc_icon.scale_xy=0.4
-		this.auc_icon.visible=false
-
-
-		this.icon=new PIXI.Sprite(assets.q_icon)
-		this.icon.anchor.set(0.5,0.5)
-		this.icon.width=60
-		this.icon.height=60
-		this.icon.visible=false
+		this.special_icon=new PIXI.Sprite(assets.auc_icon)
+		this.special_icon.anchor.set(0.5,0.5)
+		this.special_icon.y=-1
+		this.special_icon.scale_xy=0.4
+		this.special_icon.visible=false
 
 		this.price = new PIXI.BitmapText('0$', {fontName: 'mfont32',fontSize: 15});
 		this.price.anchor.set(0.5,0.5);
@@ -750,7 +743,7 @@ class cell_class extends PIXI.Container{
 		this.hl.height=90
 		this.hl.visible=false
 		
-		this.addChild(this.bcg,this.auc_icon,this.level_icon,this.icon,this.city_name,this.price,this.hl)
+		this.addChild(this.bcg,this.special_icon,this.level_icon,this.city_name,this.price,this.hl)
 	}
 
 
@@ -813,11 +806,12 @@ req_dialog={
 		//отправляем информацию о согласии играть с идентификатором игры и сидом
 		game_id=irnd(1,9999)
 		const auc=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
-		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'ACCEPT',game_id,auc,tm:Date.now()});
-
+		const rsp=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,m:'ACCEPT',game_id,special:{auc,rsp},tm:Date.now()});
+		
 		main_menu.close();
 		lobby.close();
-		online_game.activate({turn:1,auc});
+		online_game.activate({turn:1,special:{auc,rsp}});
 
 	},
 
@@ -1289,10 +1283,8 @@ process_new_message = function(msg) {
 			//получение сообщение с сдаче
 			if (msg.m==='END')
 				common.stop('opp_giveup')
-			
 
-
-			if (['exch','plan','exch_decline','exch_approve','buy','coupon','sell','buyout','fin','roll','casino_accept','casino_decline','casino_result'].includes(msg.type))
+			if (['exch','plan','exch_decline','rsp','exch_approve','buy','coupon','sell','buyout','fin','roll','casino_accept','casino_decline','casino_result'].includes(msg.type))
 				common.process_opp_move(msg)
 
 			if (['auc_bid','auc_buy','auc_dec','auc_dec2','auc_giveup'].includes(msg.type))
@@ -2648,13 +2640,14 @@ dr={
 	
 	activate(){
 		
+		const total_coupons=my_data.coupons[0]+my_data.coupons[1]+my_data.coupons[2]+my_data.coupons[3]
+		if (total_coupons>90) return		
+		
 		anim3.add(objects.dr_cont,{alpha:[0, 1,'linear'],angle:[0,5,'ease2back'],scale_xy:[1,1.1,'ease2back']}, true, 1);
 		this.bonuses_ids=this.shuffle([0,1,2,3])
 		this.bonuses_num=[irnd(1,2),irnd(1,2),irnd(1,2)]
 		this.update()
-		sound.play('dr_dlg')
-
-		
+		sound.play('dr_dlg')		
 	},
 	
 	update(){
@@ -3402,6 +3395,7 @@ fin={
 		objects.exch_cont.visible=false
 		objects.casino_cont.visible=false
 		objects.coupons_dlg_cont.visible=false
+		objects.rsp_cont.visible=false
 		
 		anim3.add(objects.end_turn_btn,{scale_xy:[0.666,0.2,'easeInBack'],alpha:[1,0,'linear']}, false, 0.15);
 	}
@@ -3693,6 +3687,175 @@ auc={
 			//аукцион завершен
 			this.close()
 		}
+	}
+
+}
+
+rsp={
+
+	opp_opt:0,
+	my_opt:0,
+	g_my_turn:0,
+	city_cell:0,
+	my_switcher:0,
+	opp_switcher:0,
+	cur_my_icon_id:1,
+	cur_opp_icon_id:2,
+	
+	activate(cell){
+
+		//очередь до игры
+		this.g_my_turn=my_turn
+
+		this.my_opt=0
+		this.opp_opt=0
+		
+		sound.play('rsp')
+		
+		this.city_cell=cell
+
+		anim3.add(objects.rsp_cont,{alpha:[0, 1,'linear'],scale_xy:[1,1.1,'ease2back']}, true, 0.2)
+		//objects.auc_make_bid_btn.texture=assets.auc_make_bid_btn
+	
+		objects.rsp_my_opt.texture=null
+		objects.rsp_opp_opt.texture=null
+		
+		objects.rsp_opp_conf_icon.visible=false
+		
+		objects.rsp_asset_name.text=cell.rus_name
+		
+		objects.rsp_info.text='Ждем выбор игроков...'
+		
+		some_process.rsp_info=()=>{			
+			objects.rsp_info.alpha=Math.abs(Math.sin(game_tick*5)*0.5+1)	
+		}
+			
+		if (opponent===bot_game)
+			scheduler.add(()=>{rsp.opp_move({opt:irnd(1,3)})},5000)
+
+		objects.rsp_btns.alpha=1
+	
+		//должны сделать ход
+		my_turn=1
+		timer.start()
+
+
+	},
+	
+	opp_move(data){
+		
+		//ждем завершения прежде чем обрабатывать ход		
+		if (!objects.rsp_cont.visible){
+			//console.log('в очереди opp_bid ',data)
+			setTimeout(()=>{this.opp_move(data)},250)
+			return;
+		}
+		
+		sound.play('auc_bid')
+		this.opp_opt=data.opt
+		objects.rsp_info.text='Соперник выбрал! Ваш ход...'
+		objects.rsp_opp_conf_icon.visible=true
+		//clearInterval(this.opp_switcher)
+		//objects.rsp_opp_opt.texture=null
+		
+		this.check()
+		
+	},
+	
+	bcg_down(e){
+		
+		if (this.my_opt) return
+		
+		sound.play('auc_bid')
+		
+		const px=e.data.global.x/app.stage.scale.x
+		const py=e.data.global.y/app.stage.scale.y
+		
+		if (py<290) return
+		this.my_opt=2
+		if (px<355) this.my_opt=1
+		if (px>435) this.my_opt=3
+
+		objects.rsp_info.text='Ждем соперника...'
+		clearInterval(this.my_switcher)
+		objects.rsp_btns.alpha=0.5
+		objects.rsp_my_opt.texture=assets.rsp_icons[this.my_opt-1]
+		fbs.ref('inbox/'+opp_data.uid).push({s:my_data.uid,type:'rsp',opt:this.my_opt,tm:Date.now()})
+		
+		//перезапускаем ход если соперник не сделал ход
+		if (!this.opp_opt){			
+			my_turn=0
+			timer.start()
+			return
+		}
+		
+		this.check()
+		
+	},
+	
+	close(){		
+
+		some_process.rsp_info=()=>{}
+		anim3.add(objects.rsp_cont,{scale_xy:[1,0.5,'easeInBack'],alpha:[1,0,'linear']}, false, 0.5)
+		
+
+	},
+	
+	check(){
+		
+		if (!this.opp_opt) return
+		if (!this.my_opt) return
+		
+				
+		objects.rsp_opp_opt.texture=assets.rsp_icons[this.opp_opt-1]
+		objects.rsp_opp_opt.scale_x=-0.666
+		
+		objects.rsp_my_opt.texture=assets.rsp_icons[this.my_opt-1]
+				
+		let winner=0
+		if(this.my_opt===1&&this.opp_opt===2) winner=1
+		if(this.my_opt===1&&this.opp_opt===3) winner=2
+		if(this.my_opt===2&&this.opp_opt===1) winner=2
+		if(this.my_opt===2&&this.opp_opt===3) winner=1 
+		if(this.my_opt===3&&this.opp_opt===1) winner=1
+		if(this.my_opt===3&&this.opp_opt===2) winner=2
+		if(this.my_opt===this.opp_opt) winner=0
+		
+		
+		some_process.rsp_info=()=>{}
+		objects.rsp_info.alpha=1
+		
+		if (winner===0)	{
+			objects.rsp_info.text='Ничья!'
+			game_msgs.add('Ничья в игре камень ножницы бумага')
+		}
+		if (winner===1)	{
+			objects.rsp_info.text='Вы выиграли!'
+			game_msgs.add('Вы выиграли в игре камень ножницы бумага')
+		}
+		if (winner===2)	{
+			objects.rsp_info.text='Вы проиграли!'
+			game_msgs.add('Вы проиграли в игре камень ножницы бумага')
+		}			
+			
+		if (winner)
+			common.win_city(this.city_cell,winner)
+		
+		setTimeout(()=>{
+			//очередь хода
+			my_turn=this.g_my_turn
+			timer.start()
+			
+			if (this.g_my_turn)
+				common.show_done_btn()
+			
+			if (!this.g_my_turn&&opponent===bot_game)
+				scheduler.add(()=>{common.opp_fin_move_event()},1000)
+			
+			this.close()		
+		
+		},2000)
+		
 	}
 
 }
@@ -4337,6 +4500,7 @@ online_game={
 		await big_msg.show({t1:['Игра завершена','Game over'][LANG],t2:result_info, t3:`${old_rating} > ${my_data.rating}`, fb:true})
 		
 		objects.auc_cont.visible=false
+		objects.rsp_cont.visible=false
 		objects.cell_info_cont.visible=false
 		objects.casino_cont.visible=false
 		objects.exch_cont.visible=false
@@ -4371,12 +4535,14 @@ bot_game={
 	me_conf_play:0,
 	
 	activate(){
+		
+		game_id=irnd(1,100)
 
 		//показываем и заполняем мою карточку
 		opp_data.uid='bot'
 		opponent=this
 		my_turn=1
-		this.on=1
+		this.on=1		
 		
 		//если открыты другие окна то закрываем их
 		if (objects.chat_cont.visible) chat.close()
@@ -4392,7 +4558,8 @@ bot_game={
 		objects.timer_text.text='!!!'
 		
 		const auc=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
-		common.activate({auc})
+		const rsp=[[13,14,15,16,17,18,20,21,22,23][irnd(0,9)]]
+		common.activate({special:{auc,rsp}})
 		
 		game_msgs.add('Игра против бота началась, ваш ход...')
 
@@ -4458,6 +4625,7 @@ bot_game={
 		objects.cell_info_cont.visible=false
 		objects.exch_cont.visible=false
 		objects.coupons_dlg_cont.visible=false
+		objects.rsp_cont.visible=false
 		casino.clear()
 		scheduler.stop_all()
 		sys_msg.close()
@@ -4565,7 +4733,7 @@ bot_game={
 		//свободная клетка
 		if (cell.type==='city'&&cell.owner===0){
 
-			if (cell.auc){
+			if (cell.special==='auc'){
 				//делаем начальную ставку
 				if (opp_data.money>cell.price){
 					scheduler.add(()=>{auc.activate(cell,'on_opp_bid')},1000)
@@ -4574,9 +4742,17 @@ bot_game={
 					scheduler.add(()=>{auc.activate(cell,'on_opp_bid')},1000)
 					scheduler.add(()=>{auc.opp_bid({type:'auc_dec'})},2000)
 				}
+			}
+			
+			/*if (cell.special==='rsp'){
+				
+				rsp.activate()
+				scheduler.add(()=>{rsp.opp_move({opt:irnd(1,3)})},1000)
 
-
-			}else{
+			}*/
+			
+			
+			if(!cell.special){
 				//пытаемся купить город
 				if (cell.type==='city'){
 					if (opp_data.money>cell.price){
@@ -4587,6 +4763,7 @@ bot_game={
 					}
 				}
 			}
+			
 		}
 
 		//город бота, просто завершаем
@@ -4757,7 +4934,7 @@ common={
 		dice.set_random()
 		game_msgs.activate()
 		
-		this.prepare_cells(params.auc)
+		this.prepare_cells(params.special)
 		
 		//начальный баланс
 		this.set_money(1,START_CAPITAL)
@@ -4795,7 +4972,7 @@ common={
 
 	},
 	
-	prepare_cells(auc_data=[]){
+	prepare_cells(special_cells=0){
 		
 		for (let i=0;i<24;i++){
 
@@ -4824,15 +5001,22 @@ common={
 				cell.owner=0
 				cell.level=0
 				cell_obj.level_icon.texture=null
+				cell.special=0
+				cell_obj.special_icon.visible=false
 				
-				//проверяем аукцион
-				if (auc_data.includes(i)){
-					cell.auc=1
-					cell_obj.auc_icon.visible=true
-				}else{
-					cell.auc=0
-					cell_obj.auc_icon.visible=false
+				//проверяем специальные ячейки
+				if(special_cells.auc.includes(i)){
+					cell.special='auc'
+					cell_obj.special_icon.visible=true
+					cell_obj.special_icon.texture=assets.auc_icon				
 				}
+				
+				if(special_cells.rsp.includes(i)){
+					cell.special='rsp'
+					cell_obj.special_icon.visible=true
+					cell_obj.special_icon.texture=assets.rsp_icon
+				}			
+
 			}
 
 			if (cell.type==='casino'){
@@ -4842,8 +5026,7 @@ common={
 				cell_obj.bcg.texture=assets.big_cell_casino_bcg
 				cell_obj.price.visible=false
 				cell_obj.city_name.visible=false
-				cell_obj.auc_icon.visible=false
-				cell_obj.icon.visible=false
+				cell_obj.special_icon.visible=false
 			}
 
 			if (cell.type==='start'){
@@ -4852,9 +5035,7 @@ common={
 				cell_obj.city_name.visible=false
 				cell_obj.interactive=false
 				cell_obj.buttonMode=false
-				cell_obj.auc_icon.visible=false
-				cell_obj.icon.visible=false
-
+				cell_obj.special_icon.visible=false
 			}
 
 			if (cell.type==='?'){
@@ -4862,12 +5043,10 @@ common={
 				cell_obj.city_name.visible=false
 				cell_obj.interactive=false
 				cell_obj.buttonMode=false
-				cell_obj.auc_icon.visible=false
-				cell_obj.icon.visible=true
+				cell_obj.special_icon.visible=false
 			}
 
 		}
-
 		
 	},
 
@@ -4938,18 +5117,35 @@ common={
 		const cell_spr=objects.cells[cell.id]
 
 		if (cell.owner===1)	{
+			cell_spr.special_icon.visible=false
 			cell_spr.bcg.texture=assets.cell_bcg_white
 			cell_spr.city_name.tint=0xffffff
 			cell_spr.level_icon.tint=0x999999
 		}
 		if (cell.owner===2){
+			cell_spr.special_icon.visible=false
 			cell_spr.bcg.texture=assets.cell_bcg_yellow
 			cell_spr.city_name.tint=0xffffff
 			cell_spr.level_icon.tint=0xC00000
 		}
 		if (cell.owner===0){
+			
 			cell_spr.bcg.texture=assets.cell_bcg
 			cell_spr.city_name.tint=0xffffff
+			
+			//проверяем специальные ячейки
+			if(cell.special==='auc'){
+				cell_spr.special_icon.visible=true
+				cell_spr.special_icon.texture=assets.auc_icon				
+			}
+			
+			if(cell.special==='rsp'){
+				cell_spr.special_icon.visible=true
+				cell_spr.special_icon.texture=assets.rsp_icon
+			}
+			
+			if(!cell.special)
+				cell_spr.special_icon.visible=false
 		}	
 
 		if (cell.type==='city'){
@@ -4964,9 +5160,6 @@ common={
 				5:assets.house4_icon,
 				6:assets.hotel_icon,
 			}
-
-			//иконка аукциона
-			cell_spr.auc_icon.visible=(cell.level===0&&cell.auc)?true:false
 
 			//цена
 			cell_spr.price.visible=cell.level>0?false:true
@@ -5129,19 +5322,21 @@ common={
 		//свободная клетка
 		if (cell.price&&cell.owner===0){
 
-			if (cell.auc){
+			if (cell.special==='auc'){
 				if (cur_player===1)
 					auc.activate(cell,'on_my_bid')
 
 				if (cur_player===2&&opponent!==bot_game)
 					auc.activate(cell,'on_opp_bid')
-
-			}else{
-				if (cur_player===1){
-					if (cell.type==='city')
-						city_dlg.show(cell)
-				}
 			}
+			
+			if (cell.special==='rsp'){
+				rsp.activate(cell)
+			}
+			
+			if (cur_player===1&&!cell.special)
+				if (cell.type==='city')
+					city_dlg.show(cell)
 		}
 		
 		//передаем сопернику обработку хода так как ход соперника
@@ -5160,7 +5355,6 @@ common={
 			if(cur_player===1)
 				casino.activate()
 		}
-
 
 		//завершение хода
 		if (cur_player===1){
@@ -5197,6 +5391,10 @@ common={
 			this.buy(2,cell,0,move_data.b)
 		}
 		
+		if (move_data.type==='rsp'){
+			rsp.opp_move(move_data)
+		}
+				
 		if (move_data.type==='buyout'){
 			const cell=cells_data[move_data.cell_id]
 			this.buyout(2,cell)
@@ -5321,19 +5519,36 @@ common={
 		return empty_cities
 	},
 	
-	remove_empty_city(city_cell){
+	remove_empty_city(cell){
 		
 		//убираем владельца города
-		city_cell.owner=0
-		city_cell.level=0
-		city_cell.auc=1
+		cell.owner=0
+		cell.level=0
+		cell.special=game_id%2==0?'auc':'rsp'
+		this.update_view(cell)
+		
+		//анимация
+		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
+		
+	},
+
+	win_city(city_cell, player){
+		
+		if (player===1)
+			sound.play('buy')
+		else
+			sound.play('city_lost')
+		
+		//убираем владельца города
+		city_cell.owner=player
+		city_cell.level=1
 		this.update_view(city_cell)
 		
 		//анимация
 		anim3.add(objects.cells[city_cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
 		
-	},
-	
+	},	
+
 	capture_empty_city(cell){
 		
 		//меняем владельца горда
@@ -5560,10 +5775,14 @@ common={
 
 		cell.level--
 		
+		
 		//анимация
 		anim3.add(objects.cells[cell.id],{scale_xy:[1,1.1,'ease2back']}, true, 0.6)
 
-		if(!cell.level) cell.owner=0
+		if(!cell.level) {
+			cell.owner=0
+			cell.special=game_id%2==0?'auc':'rsp'
+		}
 
 		const price=Math.round((cell.level>1?cell.house_cost:cell.price)*0.5)
 		this.change_money(player,price)
@@ -5583,6 +5802,7 @@ common={
 		//убираем все окна
 		objects.roll_dice_btn.visible=false
 		objects.auc_cont.visible=false
+		objects.rsp_cont.visible=false
 		objects.cell_info_cont.visible=false
 		objects.exch_cont.visible=false
 		objects.coupons_dlg_cont.visible=false
@@ -6712,7 +6932,7 @@ lobby={
 
 		//закрываем меню и начинаем игру
 		await lobby.close();
-		online_game.activate({turn:0,auc:data.auc||[]});
+		online_game.activate({turn:0,special:data.special});
 		//game2.activate('master');
 
 	},
@@ -7002,22 +7222,36 @@ main_loader={
 
 	preload_assets:0,
 
-	spritesheet_to_tex(t,xframes,yframes,total_w,total_h,xoffset,yoffset){
-
-
-		const frame_width=xframes?total_w/xframes:0;
-		const frame_height=yframes?total_h/yframes:0;
-
-		const textures=[];
-		for (let y=0;y<yframes;y++){
-			for (let x=0;x<xframes;x++){
-
-				const rect = new PIXI.Rectangle(xoffset+x*frame_width, yoffset+y*frame_height, frame_width, frame_height);
-				const quadTexture = new PIXI.Texture(t.baseTexture, rect);
-				textures.push(quadTexture);
-			}
+	divide_texture(t,frame_w,frame_h, names){
+		
+		const frames_x=t.width/frame_w
+		const frames_y=t.height/frame_h
+			
+		if (typeof(names)==='string'){
+			assets[names]=[]
+			let i=0
+			for (let y=0;y<frames_y;y++){
+				for (let x=0;x<frames_x;x++){
+					const rect=new PIXI.Rectangle(x*frame_w, y*frame_h, frame_w, frame_h)
+					assets[names][i]=new PIXI.Texture(t.baseTexture, rect)
+					i++
+				}
+			}			
+		}else{
+			
+			let i=0
+			for (let y=0;y<frames_y;y++){
+				for (let x=0;x<frames_x;x++){
+					const rect=new PIXI.Rectangle(x*frame_w, y*frame_h, frame_w, frame_h)
+					assets[names[i]]=new PIXI.Texture(t.baseTexture, rect)
+					i++
+				}
+			}			
+			
 		}
-		return textures;
+			
+
+
 	},
 
 	async load1(){
@@ -7026,7 +7260,8 @@ main_loader={
 		const loader=new PIXI.Loader()
 		
 		git_src='https://monopoly.hb.ru-msk.vkcloud-storage.ru/'
-
+		git_src=''
+		
 		//добавляем текстуры из листа загрузки
 		loader.add('load_bar_bcg', git_src+'res/'+'common/load_bar_bcg.png');
 		loader.add('main_bcg', git_src+'res/common/main_bcg.jpg');
@@ -7153,6 +7388,7 @@ main_loader={
 		loader.add('confirm_dialog',git_src+'sounds/confirm_dialog.mp3')
 		loader.add('keypress',git_src+'sounds/keypress.mp3')
 		loader.add('dr_dlg',git_src+'sounds/dr_dlg.mp3')
+		loader.add('rsp',git_src+'sounds/rsp.mp3')
 		
 		//прогресс
 		loader.onProgress.add((l,res)=>{
@@ -7171,7 +7407,11 @@ main_loader={
 			assets[res_name]=res.texture||res.sound||res.data;
 		}
 
-
+		this.divide_texture(assets.dice_pack,120,120,['d1','d2','d3','d4','d5','d6','roll0','roll1','roll2'])
+		this.divide_texture(assets.houses_pack,80,50,['house1_icon','house2_icon','house3_icon','house4_icon','hotel_icon'])
+		this.divide_texture(assets.coupons_pack,165,105,['coupon_0_icon','coupon_1_icon','coupon_2_icon','coupon_3_icon'])
+		this.divide_texture(assets.rsp_pack,150,150,'rsp_icons')
+		
 		//добавялем библиотеку аватаров
 		const script = document.createElement('script');
 		script.textContent = assets.multiavatar;
@@ -7515,7 +7755,7 @@ async function init_game_env(lang) {
 	}
 
 	//номер комнаты
-	room_name= 'states1';
+	room_name= 'states2';
 
 	//ждем загрузки чата
 	await Promise.race([
