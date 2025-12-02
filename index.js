@@ -3731,7 +3731,7 @@ rsp={
 		}
 			
 		if (opponent===bot_game)
-			scheduler.add(()=>{rsp.opp_move({opt:irnd(1,3)})},5000)
+			scheduler.add(()=>{rsp.opp_move({opt:irnd(1,3)})},3000)
 
 		objects.rsp_btns.alpha=1
 	
@@ -4729,6 +4729,9 @@ bot_game={
 	},
 
 	process_move(cell){
+		
+		//если игра уже завершена
+		if (!common.on) return
 
 		//свободная клетка
 		if (cell.type==='city'&&cell.owner===0){
@@ -4768,16 +4771,20 @@ bot_game={
 
 		//город бота, просто завершаем
 		if (cell.owner===2){
+			
+			const cur_country=cell.country
+			const cur_cities=cells_data.filter(d=>d.country===cur_country)
+			const all_mine=cur_cities.every(c=>c.owner===2)
 
 			//пробуем играть в казино так как денег много
-			if (opp_data.money>500&&Math.random()>0.75){
+			if (!all_mine&&opp_data.money>500&&Math.random()>0.75){
 				common.process_opp_move({type:'casino_accept'})
 				scheduler.add(()=>{this.play_casino()},2000)
 				scheduler.add(()=>{common.opp_fin_move_event()},3000)
 			}else{
 				scheduler.add(()=>{this.try_upgrade_cur_city(cell)},1000)
 				scheduler.add(()=>{common.opp_fin_move_event()},1500)
-			}			
+			}	
 			
 		}
 
