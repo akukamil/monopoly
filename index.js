@@ -52,7 +52,7 @@ anim3={
 	c5: (2 * Math.PI) / 4.5,
 	empty_spr : {x:0,visible:false,ready:true, alpha:0},
 
-	slots: new Array(20).fill().map(u => ({obj:{},on:0,block:true,params_num:0,p_resolve:0,progress:0,vis_on_end:false,tm:0,params:new Array(10).fill().map(u => ({param:'x',s:0,f:0,d:0,func:this.linear}))})),
+	slots: new Array(50).fill().map(u => ({obj:{},on:0,block:true,params_num:0,p_resolve:0,progress:0,vis_on_end:false,tm:0,params:new Array(10).fill().map(u => ({param:'x',s:0,f:0,d:0,func:this.linear}))})),
 
 	any_on() {
 
@@ -7023,6 +7023,65 @@ lobby={
 	}
 }
 
+sparks={
+	
+	init(){
+		
+		for (let i=0;i<objects.sparks.length;i++)
+			this.restart_spark(objects.sparks[i])		
+		some_process.sparks=this.process.bind(sparks)
+		
+	},
+	
+	restart_spark(spark){
+		
+		spark.x=irnd(0,M_WIDTH)
+		spark.y=irnd(0,M_HEIGHT)
+		const tm=Date.now()
+		
+		const rang=Math.random()*6.25
+		const rspd=Math.random()*0.2+0.1
+		spark.dx=Math.sin(rang)*rspd
+		spark.dy=Math.cos(rang)*rspd
+		spark.tm=tm
+		const tar_alpha=Math.random()*0.4+0.1
+		anim3.add(spark,{alpha:[0,tar_alpha,'linear']},true, 0.5,false);
+		spark.state=1
+		spark.scale_xy=Math.random()*0.9+0.1
+		
+	},
+	
+	close_spark(spark){
+		
+		spark.state=2
+		anim3.add(spark,{alpha:[spark.alpha, 0,'linear']},true, 2,false).then(()=>{
+			spark.state=0
+		})
+		
+	},
+	
+	process(){		
+		
+		const tm=Date.now()
+		
+		for (let i=0;i<objects.sparks.length;i++){
+			
+			const spark=objects.sparks[i]
+			spark.x+=spark.dx
+			spark.y+=spark.dy
+			
+			if (spark.x>M_WIDTH||spark.x<0||spark.y<0||spark.state===0)
+				this.restart_spark(spark)
+			
+			if (spark.state===1 && tm>spark.tm+5000)
+				this.close_spark(spark)
+			
+		}
+		
+	}
+	
+}
+
 lb={
 
 	cards_pos: [[370,10],[380,70],[390,130],[380,190],[360,250],[330,310],[290,370]],
@@ -7606,7 +7665,7 @@ async function define_platform_and_language() {
 	if (s.includes('127.0')) {
 
 		game_platform = 'DEBUG';
-		LANG = await language_dialog.show();
+		LANG = 0
 		return;
 	}
 
@@ -7618,7 +7677,7 @@ async function define_platform_and_language() {
 
 async function init_game_env(lang) {
 
-
+	document.getElementById('loadingText').remove();
 	await define_platform_and_language();
 
 	//идентификация
@@ -7641,7 +7700,7 @@ async function init_game_env(lang) {
 	}
 
 	//создаем приложение пикси
-	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(1,168,246,1)}</style>';
+	document.body.innerHTML='<style>html,body {margin: 0;padding: 0;height: 100%;}body {display: flex;align-items:center;justify-content: center;background-color: rgba(77,121,199,1)}</style>';
 	app = new PIXI.Application({width:M_WIDTH, height:M_HEIGHT,antialias:false,backgroundColor : 0x01A8F6});
 	const c=document.body.appendChild(app.view);
 	c.style['boxShadow'] = '0 0 15px #000000';
@@ -7692,7 +7751,7 @@ async function init_game_env(lang) {
 	await main_loader.load2();
 
 	anim3.add(objects.id_cont,{alpha:[0,1,'linear'],y:[-200,objects.id_cont.sy,'easeOutBack']}, true,0.5);
-	some_process.loup_anim=()=>{objects.id_gear.rotation+=0.02}
+	some_process.loup_anim=()=>{objects.id_gear.rotation+=0.02;objects.id_cont.rotation=0.1*Math.sin(game_tick*0.1)}
 
 	//загрузка сокета
 	await auth2.load_script('https://akukamil.github.io/common/my_ws.js');
@@ -7777,6 +7836,8 @@ async function init_game_env(lang) {
 	client_id = irnd(10,999999);
 	
 	SERVER_TM=await my_ws.get_tms() 
+	
+	sparks.init()
 
 	//проверка ежедневного бонуса
 	dr.check()
@@ -7816,7 +7877,7 @@ async function init_game_env(lang) {
 		chat.wheel_event(Math.sign(event.deltaY));
 	});
 	window.addEventListener('keydown', function(event) { keyboard.keydown(event.key)});
-	window.addEventListener('contextmenu', function(e) { e.preventDefault()})
+	//window.addEventListener('contextmenu', function(e) { e.preventDefault()})
 	
 	//window.addEventListener('contextmenu', event => event.preventDefault());
 

@@ -1,16 +1,50 @@
 <!DOCTYPE html>
 <html>
-<head>
-</head>
  <meta name="http-equiv" content="Content-type: text/html; charset=windows-1251">
+  <link rel="shortcut icon" href="">
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+	background-image: url('https://akukamil.github.io/monopoly/res/common/full_bcg.jpg');
+}
+
+.loading-title {
+    color: rgb(170,170,190);
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+
+.pixi {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(70,70,90);
+}
+
+</style>
+
+<div class="loading-title"  id="loadingText">Loading...</div>
+<div class="pixi" id='pixi' </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
-
-<script src="https://akukamil.github.io/common/pixi_scale.min.js" ></script>
-<script src="pixi-sound.js"></script>
+<script src="https://mtcom.website.yandexcloud.net/pixi_scale.min.js" ></script>
+<script src="https://mtcom.website.yandexcloud.net/pixi-sound.js"></script>
+<script src="https://mtcom.website.yandexcloud.net/my_ws.js"></script>
+<script src="https://mtcom.website.yandexcloud.net/multiavatar.min.js"></script>
 <script src="index.js" charset="utf-8"></script>
-
+ 
 <body onload="init_game_env()">
+</body>
 
 </html>
