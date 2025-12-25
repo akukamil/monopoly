@@ -2988,7 +2988,8 @@ city_dlg={
 		
 		
 		let type=''
-		const can_buy_or_upgrade=((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===0) || ((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===1&&is_my_county&&cell.level<6)
+		const can_buy_or_upgrade=((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===0&&!cell.special) ||
+		((me_on_cell||common.temp_coupons[0]||my_data.coupons[0])&&cell.owner===1&&is_my_county&&cell.level<6)
 		const can_buy_out=(common.temp_coupons[1]||my_data.coupons[1])&&cell.owner===2&&country_not_built
 		const can_sell=cell.owner===1
 	
